@@ -1,0 +1,15 @@
+# IDE
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java
+**/target/
+**/logs/
+backend/.m2/
+
+# Uploads
+backend/uploads/
