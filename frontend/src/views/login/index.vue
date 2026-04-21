@@ -92,10 +92,14 @@ const loading = ref(false)
 const remember = ref(true)
 const year = new Date().getFullYear()
 
-// 品牌区先居中渐显 1s，再横向左拉展开登录表单
-const revealed = ref(false)
+// 首次进入走品牌动画，退出登录回来直接展示
+const isFirstVisit = !sessionStorage.getItem('visited')
+const revealed = ref(!isFirstVisit)
 onMounted(() => {
-  setTimeout(() => (revealed.value = true), 1100)
+  if (isFirstVisit) {
+    sessionStorage.setItem('visited', '1')
+    setTimeout(() => (revealed.value = true), 900)
+  }
 })
 
 const handleLogin = async () => {
@@ -122,7 +126,7 @@ const handleLogin = async () => {
 }
 
 .brand {
-  flex: 1.1 1 0;
+  flex: 1.2 1 0;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -152,7 +156,7 @@ const handleLogin = async () => {
   }
   > *:nth-child(1) { animation-delay: 0.1s; }
   > *:nth-child(2) { animation-delay: 0.28s; }
-  > *:nth-child(3) { animation-delay: 0.46s; }
+  > *:nth-child(3) { animation-delay: 0.36s; }
 }
 
 @keyframes brand-in {
@@ -248,11 +252,10 @@ const handleLogin = async () => {
 .form-side {
   flex: 0 0 0;
   min-width: 0;
-  max-width: 640px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px;
+  padding: 40px 60px;
   background: var(--bg);
   overflow: hidden;
   opacity: 0;
@@ -262,13 +265,25 @@ const handleLogin = async () => {
 }
 
 .login-page.revealed .form-side {
-  flex: 1 0 480px;
+  flex: 0.4 0 480px;
   opacity: 1;
 }
 
 .form-box {
   width: 100%;
-  max-width: 380px;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 40px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-top-color: rgba(255, 255, 255, 0.7);
+  border-left-color: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   opacity: 0;
   transform: translateX(-16px);
   transition:
