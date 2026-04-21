@@ -110,6 +110,7 @@ const onCommand = async (cmd: string) => {
     customClass: 'logout-dialog'
   })
   userStore.logout()
+  sessionStorage.setItem('fromLogout', '1')
   router.push('/login')
 }
 </script>

@@ -92,13 +92,13 @@ const loading = ref(false)
 const remember = ref(true)
 const year = new Date().getFullYear()
 
-// 首次进入走品牌动画，退出登录回来直接展示
-const isFirstVisit = !sessionStorage.getItem('visited')
-const revealed = ref(!isFirstVisit)
+// 退出登录回来跳过动画，其余情况正常播放
+const fromLogout = sessionStorage.getItem('fromLogout')
+sessionStorage.removeItem('fromLogout')
+const revealed = ref(!!fromLogout)
 onMounted(() => {
-  if (isFirstVisit) {
-    sessionStorage.setItem('visited', '1')
-    setTimeout(() => (revealed.value = true), 900)
+  if (!fromLogout) {
+    setTimeout(() => (revealed.value = true), 850)
   }
 })
 
