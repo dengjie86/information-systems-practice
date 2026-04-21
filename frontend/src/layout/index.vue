@@ -119,7 +119,8 @@ const onCommand = async (cmd: string) => {
 
 .aside {
   background: var(--bg-subtle);
-  border-right: 1px solid var(--border);
+  box-shadow: 3px 0 12px rgba(0, 0, 0, 0.053);
+  z-index: 2;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
@@ -136,7 +137,6 @@ const onCommand = async (cmd: string) => {
   font-weight: 600;
   color: var(--text);
   letter-spacing: -0.01em;
-  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -248,9 +248,11 @@ const onCommand = async (cmd: string) => {
   align-items: center;
   justify-content: space-between;
   background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.035);
   padding: 0 20px;
   height: 60px !important;
+  position: relative;
+  z-index: 1;
 
   .header-left {
     display: flex;
