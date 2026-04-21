@@ -7,11 +7,6 @@
 </template>
 
 <style>
-body {
-  margin: 0;
-  padding: 0;
-}
-
 .page-enter-active,
 .page-leave-active {
   transition: opacity 0.35s ease, transform 0.35s ease;

@@ -20,9 +20,8 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   res => {
-    const { code, data, msg } = res.data
+    const { code, data, msg } = res.data ?? {}
     if (code === 200) return data
-    
     ElMessage.error(msg || '接口异常')
     return Promise.reject(new Error(msg || 'Error'))
   },

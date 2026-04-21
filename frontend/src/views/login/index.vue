@@ -10,7 +10,7 @@
         <div class="hero">
           <div class="badge">
             <span class="dot" />
-            v0.1 · 计算机学院 · 信息系统实践
+            v0.1 · 创业学院 · 信息系统实践
           </div>
           <h1>让每一次报修<br />都有迹可循。</h1>
           <p>从学生提报、管理员审核分派，到维修师傅处理回执，全流程在线、可追溯、可统计。</p>
@@ -272,7 +272,6 @@ const handleLogin = async () => {
 .form-box {
   width: 100%;
   max-width: 440px;
-  margin: 0 auto;
   padding: 40px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.4);

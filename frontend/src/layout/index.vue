@@ -1,15 +1,13 @@
 <template>
   <el-container class="layout">
     <el-aside :width="collapsed ? '64px' : '232px'" class="aside">
-      <div class="logo">
+      <div class="logo" :class="{ 'logo-collapsed': collapsed }">
         <div class="logo-mark">D</div>
-        <transition name="fade">
-          <span v-if="!collapsed">DormRepair</span>
-        </transition>
+        <span class="logo-text" :class="{ hidden: collapsed }">DormRepair</span>
       </div>
 
       <el-scrollbar>
-        <div v-if="!collapsed" class="menu-group">工作空间</div>
+        <div class="menu-group" :class="{ hidden: collapsed }">工作空间</div>
         <el-menu
           router
           :default-active="route.path"
@@ -24,7 +22,7 @@
         </el-menu>
       </el-scrollbar>
 
-      <div v-if="!collapsed" class="aside-footer">
+      <div class="aside-footer" :class="{ hidden: collapsed }">
         <div class="status-dot" />
         系统运行正常
       </div>
@@ -105,7 +103,12 @@ const currentTitle = computed(
 
 const onCommand = async (cmd: string) => {
   if (cmd !== 'logout') return
-  await ElMessageBox.confirm('确认退出当前账号？', '提示', { type: 'warning' })
+  await ElMessageBox.confirm('确认退出当前账号？', '退出登录', {
+    confirmButtonText: '确认退出',
+    cancelButtonText: '取消',
+    type: 'warning',
+    customClass: 'logout-dialog'
+  })
   userStore.logout()
   router.push('/login')
 }
@@ -120,7 +123,7 @@ const onCommand = async (cmd: string) => {
 .aside {
   background: var(--bg-subtle);
   border-right: 1px solid var(--border);
-  transition: width 0.2s ease;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -138,6 +141,8 @@ const onCommand = async (cmd: string) => {
   letter-spacing: -0.01em;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
 
   .logo-mark {
     width: 26px;
@@ -150,22 +155,62 @@ const onCommand = async (cmd: string) => {
     justify-content: center;
     font-size: 13px;
     font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    transition: opacity 0.15s ease 0.1s;
+  }
+
+  &.logo-collapsed {
+    padding: 0 19px;
+    .logo-text { opacity: 0; transition-delay: 0s; }
   }
 }
 
 .menu-group {
-  padding: 16px 20px 6px;
+  padding: 14px 20px 6px;
   font-size: 11px;
   font-weight: 500;
   color: var(--text-soft);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  white-space: nowrap;
+  overflow: hidden;
+  max-height: 36px;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s,
+              opacity 0.2s ease 0.1s,
+              padding 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.05s;
+  &.hidden {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 20px;
+    transition: max-height 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.1s ease,
+                padding 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 .menu {
   border: none;
   background: transparent;
   padding: 0 10px;
+  margin-top: 10px;
+
+  &.el-menu--collapse {
+    padding: 0 8px;
+
+    :deep(.el-menu-item) {
+      padding: 0 !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      min-width: auto !important;
+
+      .el-icon { margin-right: 0 !important; }
+      .el-menu-tooltip__trigger { padding: 0 !important; display: flex !important; justify-content: center !important; width: 100% !important; }
+    }
+  }
 
   :deep(.el-menu-item) {
     height: 38px;
@@ -175,6 +220,9 @@ const onCommand = async (cmd: string) => {
     border-radius: 6px;
     margin-bottom: 2px;
     padding-left: 12px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    white-space: nowrap;
 
     .el-icon {
       font-size: 16px;
@@ -205,6 +253,10 @@ const onCommand = async (cmd: string) => {
   font-size: 12px;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.15s ease 0.1s;
+  &.hidden { opacity: 0; height: 0; padding: 0; border: none; transition-delay: 0s; }
   .status-dot {
     width: 6px;
     height: 6px;
@@ -230,11 +282,13 @@ const onCommand = async (cmd: string) => {
   }
 
   .toggle {
-    font-size: 18px;
+    font-size: 22px;
     cursor: pointer;
     color: var(--text-muted);
-    padding: 6px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    transition: all 0.15s;
     &:hover {
       color: var(--text);
       background: var(--bg-muted);
@@ -319,9 +373,6 @@ const onCommand = async (cmd: string) => {
   padding: 24px 28px;
   overflow: auto;
 }
-
-.fade-enter-active, .fade-leave-active { transition: opacity 0.15s; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
 
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.18s ease; }
 .fade-slide-enter-from { opacity: 0; transform: translateY(6px); }
