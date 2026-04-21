@@ -54,6 +54,7 @@ body {
 #app {
   max-width: none;
   text-align: left;
+  zoom: 1.1;
 }
 
 .logout-dialog {

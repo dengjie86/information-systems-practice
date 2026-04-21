@@ -22,10 +22,6 @@
         </el-menu>
       </el-scrollbar>
 
-      <div class="aside-footer" :class="{ hidden: collapsed }">
-        <div class="status-dot" />
-        系统运行正常
-      </div>
     </el-aside>
 
     <el-container>
@@ -117,7 +113,7 @@ const onCommand = async (cmd: string) => {
 
 <style lang="scss" scoped>
 .layout {
-  height: 100vh;
+  height: 100%;
   background: var(--bg);
 }
 
@@ -246,26 +242,6 @@ const onCommand = async (cmd: string) => {
   }
 }
 
-.aside-footer {
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--text-muted);
-  border-top: 1px solid var(--border);
-  white-space: nowrap;
-  overflow: hidden;
-  transition: opacity 0.15s ease 0.1s;
-  &.hidden { opacity: 0; height: 0; padding: 0; border: none; transition-delay: 0s; }
-  .status-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--success);
-    box-shadow: 0 0 0 3px var(--success-soft);
-  }
-}
 
 .header {
   display: flex;

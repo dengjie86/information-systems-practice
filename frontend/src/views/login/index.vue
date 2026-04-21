@@ -119,7 +119,7 @@ const handleLogin = async () => {
 <style lang="scss" scoped>
 .login-page {
   display: flex;
-  height: 100vh;
+  height: 100%;
   width: 100%;
   overflow: hidden;
   background: var(--bg);
