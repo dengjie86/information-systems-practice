@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS `user`;
+
+CREATE TABLE `user` (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    real_name VARCHAR(50) NOT NULL,
+    role VARCHAR(20) NOT NULL,
+    phone VARCHAR(20),
+    dorm_building VARCHAR(50),
+    dorm_room VARCHAR(20),
+    avatar VARCHAR(255),
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
