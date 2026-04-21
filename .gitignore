@@ -1,6 +1,8 @@
 # IDE
 .idea/
 *.iml
+.vscode/
+.windsurf/
 
 # OS
 .DS_Store
