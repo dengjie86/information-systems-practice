@@ -1,27 +1,40 @@
+# IDE
 .idea/
 *.iml
-*.iws
 .vscode/
-.project
-.settings/
-.classpath
-bin/
+.windsurf/
+*.swp
+
+# OS
 .DS_Store
 Thumbs.db
-target/
+desktop.ini
+
+# Java
+**/target/
+**/logs/
 *.log
-logs/
-temp/
-.mvn/wrapper/maven-wrapper.jar
+backend/.m2/
+*.class
+*.jar
+!backend/.mvn/wrapper/*.jar
+
+# Node
 node_modules/
-dist/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+frontend/dist/
+*.local
+.env*
 .eslintcache
-.stylelintcache
-*.sql.gz
-*.sql.bak
-*.db
+*.tsbuildinfo
+
+# Test & Coverage
+**/coverage/
+**/.nyc_output/
+
+# Uploads
+backend/uploads/
+
+# Misc
+*.bak
 *.tmp
-~$*.doc*
+*.orig
