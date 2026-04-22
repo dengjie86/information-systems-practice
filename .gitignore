@@ -1,8 +1,3 @@
-# =================================================================
-# 校园宿舍报修与工单管理系统
-# =================================================================
-
-### --- 1. IDE 与 系统配置文件 ---
 .idea/
 *.iml
 *.iws
@@ -13,33 +8,20 @@
 bin/
 .DS_Store
 Thumbs.db
-
-### --- 2. 后端相关 (Spring Boot / Maven) ---
-# 屏蔽编译生成的 target 目录
 target/
-# 屏蔽本地运行产生的日志
 *.log
 logs/
-# 屏蔽本地生成的临时文件
 temp/
 .mvn/wrapper/maven-wrapper.jar
-
-### --- 3. 前端相关 (Vue / Node.js) ---
 node_modules/
-# 屏蔽打包生成的发布目录
 dist/
-# 屏蔽前端日志与本地缓存
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .eslintcache
 .stylelintcache
-
-### --- 4. 数据库与文档处理 (针对成员4的优化) ---
-# 屏蔽本地数据库备份文件
 *.sql.gz
 *.sql.bak
 *.db
-# 屏蔽文档转换过程中的临时产物
 *.tmp
 ~$*.doc*
