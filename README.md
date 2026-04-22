@@ -14,9 +14,41 @@
 | **陈梓轩** | yihai23 | 数据库与后端协助 | 负责数据库设计、实体与 Mapper、统计分析接口         |
 | **胡宇翔** | saintwugo | 测试与文档负责人 | 负责测试用例、测试记录、计划书、中期报告、软件说明书、最终演示材料 |
 
+## 快速启动
+
+### 数据库
+
+```bash
+mysql -u root -p < database/schema.sql
+mysql -u root -p < database/init.sql
+mysql -u root -p < database/mock_data.sql   # 演示数据，可选
+```
+
+### 后端
+
+```bash
+cd backend
+mvn spring-boot:run
+# 启动后访问 http://localhost:8080/api/ping
+```
+
+### 前端
+
+```bash
+cd frontend
+npm install
+npm run dev
+# 启动后访问 http://localhost:3000
+```
+
+测试账号：`admin` / `123456`（其他账号见 `docs/数据库设计.md`）
+
 ## 当前开发进度
-- [ ] 项目计划书定稿与提交
-- [ ] Git 仓库目录结构初始化
-- [ ] 数据库表结构设计
-- [ ] 后端基础架构搭建
-- [ ] 前端基础架构搭建
+- [x] 项目计划书定稿与提交
+- [x] Git 仓库目录结构初始化
+- [x] 数据库表结构设计
+- [x] 后端基础架构搭建
+- [x] 前端基础架构搭建
+- [x] 统一响应体与接口规范
+- [x] 登录认证与 JWT 鉴权
+- [x] 前端登录与路由鉴权

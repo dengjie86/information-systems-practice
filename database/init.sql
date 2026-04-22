@@ -2,12 +2,12 @@ USE dorm_repair;
 
 -- 测试账号，密码都是 123456 (BCrypt)
 INSERT INTO `user` (username, password, real_name, role, phone, dorm_building, dorm_room, status) VALUES
-('admin', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '系统管理员', 'ADMIN', '13800000001', NULL, NULL, 1),
-('student1', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '张三', 'STUDENT', '13800000011', '1号楼', '101', 1),
-('student2', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '李四', 'STUDENT', '13800000012', '1号楼', '203', 1),
-('student3', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '王五', 'STUDENT', '13800000013', '2号楼', '305', 1),
-('worker1', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '赵师傅', 'WORKER', '13800000021', NULL, NULL, 1),
-('worker2', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36Lp.K2IvWF2nIFnExM4CXi', '钱师傅', 'WORKER', '13800000022', NULL, NULL, 1);
+('admin', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '系统管理员', 'ADMIN', '13800000001', NULL, NULL, 1),
+('student1', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '张三', 'STUDENT', '13800000011', '1号楼', '101', 1),
+('student2', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '李四', 'STUDENT', '13800000012', '1号楼', '203', 1),
+('student3', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '王五', 'STUDENT', '13800000013', '2号楼', '305', 1),
+('worker1', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '赵师傅', 'WORKER', '13800000021', NULL, NULL, 1),
+('worker2', '$2a$10$qq71wMIzL3WWTGX5qYA6JOk5Q6awRAIn3273U8Zkqf3DX1IfqusdK', '钱师傅', 'WORKER', '13800000022', NULL, NULL, 1);
 
 -- 故障分类
 INSERT INTO repair_category (category_name, description, sort_order, status) VALUES

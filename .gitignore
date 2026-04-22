@@ -14,5 +14,11 @@ Thumbs.db
 **/logs/
 backend/.m2/
 
+# Node
+node_modules/
+frontend/dist/
+*.local
+.env*
+
 # Uploads
 backend/uploads/
