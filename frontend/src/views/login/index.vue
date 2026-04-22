@@ -81,6 +81,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { login as loginApi } from '@/api/auth'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 
@@ -107,12 +108,15 @@ const handleLogin = async () => {
     return ElMessage.warning('请输入用户名和密码')
   }
   loading.value = true
-  // TODO: 联调时替换为 api/auth.ts 的 login()
-  await new Promise(r => setTimeout(r, 400))
-  userStore.setToken('mock-token-123')
-  loading.value = false
-  ElMessage.success('登录成功')
-  router.push('/')
+  try {
+    const res = await loginApi(form.value)
+    userStore.setToken(res.token)
+    userStore.setUserInfo(res.userInfo)
+    ElMessage.success('登录成功')
+    router.push('/home')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

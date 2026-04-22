@@ -42,10 +42,10 @@
           <div class="divider" />
           <el-dropdown @command="onCommand">
             <div class="user">
-              <div class="avatar">管</div>
+              <div class="avatar">{{ avatarChar }}</div>
               <div class="user-meta">
-                <div class="user-name">管理员</div>
-                <div class="user-role">admin@dorm</div>
+                <div class="user-name">{{ displayName }}</div>
+                <div class="user-role">{{ displayRole }}</div>
               </div>
               <el-icon class="chev"><CaretBottom /></el-icon>
             </div>
@@ -73,11 +73,11 @@
 <script setup lang="ts">
 import { computed, ref, markRaw } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import { useUserStore, type Role } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
-  Odometer, Tickets, UserFilled, DataAnalysis,
-  Fold, Expand, CaretBottom, Search, Bell
+  Odometer, Tickets, UserFilled, DataAnalysis, EditPen, Menu as MenuIcon, Tools,
+  Fold, Expand, CaretBottom, Search, Bell,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -86,15 +86,55 @@ const userStore = useUserStore()
 
 const collapsed = ref(false)
 
-const menus = [
-  { path: '/home',  title: '工作台', icon: markRaw(Odometer) },
-  { path: '/order', title: '工单管理', icon: markRaw(Tickets) },
-  { path: '/user',  title: '用户管理', icon: markRaw(UserFilled) },
-  { path: '/stats', title: '统计分析', icon: markRaw(DataAnalysis) }
-]
+interface MenuItem {
+  path: string
+  title: string
+  icon: ReturnType<typeof markRaw>
+}
+
+const menusByRole: Record<Role, MenuItem[]> = {
+  STUDENT: [
+    { path: '/home',          title: '工作台',   icon: markRaw(Odometer) },
+    { path: '/repair/create', title: '报修申请', icon: markRaw(EditPen) },
+    { path: '/repair/list',   title: '我的工单', icon: markRaw(Tickets) },
+  ],
+  ADMIN: [
+    { path: '/home',       title: '工作台',   icon: markRaw(Odometer) },
+    { path: '/order/list', title: '工单管理', icon: markRaw(Tickets) },
+    { path: '/user/list',  title: '用户管理', icon: markRaw(UserFilled) },
+    { path: '/category',   title: '故障分类', icon: markRaw(MenuIcon) },
+    { path: '/stats',      title: '统计分析', icon: markRaw(DataAnalysis) },
+  ],
+  WORKER: [
+    { path: '/home',      title: '工作台',   icon: markRaw(Odometer) },
+    { path: '/work/list', title: '我的工单', icon: markRaw(Tools) },
+  ],
+}
+
+const menus = computed(() =>
+  menusByRole[userStore.role as Role] ?? menusByRole.ADMIN
+)
 
 const currentTitle = computed(
-  () => menus.find(m => m.path === route.path)?.title ?? '首页'
+  () => menus.value.find(m => m.path === route.path)?.title ?? '首页'
+)
+
+const roleLabel: Record<Role, string> = {
+  STUDENT: '学生',
+  ADMIN: '管理员',
+  WORKER: '维修人员',
+}
+
+const displayName = computed(() =>
+  userStore.userInfo?.realName || userStore.userInfo?.username || '用户'
+)
+
+const displayRole = computed(() =>
+  roleLabel[userStore.role as Role] ?? '未知'
+)
+
+const avatarChar = computed(() =>
+  displayName.value.slice(-1)
 )
 
 const onCommand = async (cmd: string) => {
@@ -103,7 +143,7 @@ const onCommand = async (cmd: string) => {
     confirmButtonText: '确认退出',
     cancelButtonText: '取消',
     type: 'warning',
-    customClass: 'logout-dialog'
+    customClass: 'logout-dialog',
   })
   userStore.logout()
   sessionStorage.setItem('fromLogout', '1')
