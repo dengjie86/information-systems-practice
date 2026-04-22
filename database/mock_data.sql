@@ -29,9 +29,9 @@ INSERT INTO repair_record (order_id, worker_id, action_desc, action_type, status
 (1, 5, '已更换新灯管，测试正常发光，维修完成。', 'FINISH', 'PROCESSING', 'PENDING_CONFIRM', '2026-04-15 14:00:00'),
 (2, 6, '已接单，准备维修工具。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-15 13:00:00'),
 (2, 6, '拆除旧水龙头，安装新阀芯，测试不再漏水。', 'FINISH', 'PROCESSING', 'PENDING_CONFIRM', '2026-04-15 16:00:00'),
-(3, 5, '已接单，带门锁配件上门。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-16 09:00:00'),
-(3, 5, '更换锁芯，润滑锁体，开关顺畅，等待学生确认。', 'FINISH', 'PROCESSING', 'PENDING_CONFIRM', '2026-04-16 11:30:00'),
-(4, 6, '已接单，需要先排查楼层交换机。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-17 11:00:00'),
+(4, 5, '已接单，带门锁配件上门。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-16 09:00:00'),
+(4, 5, '更换锁芯，润滑锁体，开关顺畅，等待学生确认。', 'FINISH', 'PROCESSING', 'PENDING_CONFIRM', '2026-04-16 11:30:00'),
+(5, 6, '已接单，需要先排查楼层交换机。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-17 11:00:00'),
 (3, 6, '已接单。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-13 09:30:00'),
 (3, 6, '检查发现是空气开关跳闸，已复位，插座恢复供电。', 'FINISH', 'PROCESSING', 'PENDING_CONFIRM', '2026-04-13 11:00:00');
 
