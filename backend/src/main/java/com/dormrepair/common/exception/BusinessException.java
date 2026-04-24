@@ -1,10 +1,6 @@
 package com.dormrepair.common.exception;
 
 import com.dormrepair.common.result.ResultCode;
-
-/**
- * Exception for expected business rule violations.
- */
 public class BusinessException extends RuntimeException {
 
     private final Integer code;

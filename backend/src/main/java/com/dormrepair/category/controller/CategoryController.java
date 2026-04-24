@@ -2,19 +2,24 @@ package com.dormrepair.category.controller;
 
 import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.service.CategoryService;
+import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.Result;
+import com.dormrepair.common.result.ResultCode;
 import com.dormrepair.security.LoginUser;
 import com.dormrepair.security.LoginUserContext;
+import jakarta.validation.Valid;
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/category")
 public class CategoryController {
 
-    @Autowired
-    private CategoryService categoryService;
+    private final CategoryService categoryService;
+
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     // 学生报修时拿分类列表，只返回启用的
     @GetMapping("/list")
@@ -29,14 +34,14 @@ public class CategoryController {
     }
 
     @PostMapping("/add")
-    public Result<?> add(@RequestBody RepairCategoryEntity entity) {
+    public Result<?> add(@Valid @RequestBody RepairCategoryEntity entity) {
         checkAdmin();
         categoryService.add(entity);
         return Result.success();
     }
 
     @PutMapping("/update")
-    public Result<?> update(@RequestBody RepairCategoryEntity entity) {
+    public Result<?> update(@Valid @RequestBody RepairCategoryEntity entity) {
         checkAdmin();
         categoryService.update(entity);
         return Result.success();
@@ -53,7 +58,7 @@ public class CategoryController {
     private void checkAdmin() {
         LoginUser user = LoginUserContext.requireUser();
         if (!"ADMIN".equals(user.role())) {
-            throw new RuntimeException("没有权限");
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权访问");
         }
     }
 }

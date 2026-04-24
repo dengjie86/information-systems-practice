@@ -1,11 +1,7 @@
 package com.dormrepair.common.result;
-
-/**
- * Unified response codes used by the backend APIs.
- */
 public enum ResultCode {
 
-    SUCCESS(200, "success"),
+    SUCCESS(200, "成功"),
     BAD_REQUEST(400, "请求参数错误"),
     UNAUTHORIZED(401, "未登录或登录已失效"),
     FORBIDDEN(403, "无权限访问"),

@@ -9,6 +9,7 @@ import com.dormrepair.security.LoginUserContext;
 import com.dormrepair.user.dto.UpdateDormRequest;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.service.UserService;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,8 +34,11 @@ public class UserController {
     }
 
     @PutMapping("/dorm")
-    public Result<?> updateDorm(@RequestBody UpdateDormRequest req) {
+    public Result<?> updateDorm(@Valid @RequestBody UpdateDormRequest req) {
         LoginUser loginUser = LoginUserContext.requireUser();
+        if (!"STUDENT".equals(loginUser.role())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以维护宿舍信息");
+        }
         userService.updateDormInfo(loginUser.userId(), req);
         return Result.success();
     }

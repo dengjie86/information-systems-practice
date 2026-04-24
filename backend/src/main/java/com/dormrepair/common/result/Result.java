@@ -1,13 +1,4 @@
 package com.dormrepair.common.result;
-
-/**
- * Standard API response wrapper.
- *
- * @param code business status code
- * @param msg response message
- * @param data response payload
- * @param <T> payload type
- */
 public record Result<T>(Integer code, String msg, T data) {
 
     public static <T> Result<T> success() {

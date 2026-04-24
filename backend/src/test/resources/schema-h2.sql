@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS `user`;
+DROP TABLE IF EXISTS repair_category;
 
 CREATE TABLE `user` (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -10,6 +11,16 @@ CREATE TABLE `user` (
     dorm_building VARCHAR(50),
     dorm_room VARCHAR(20),
     avatar VARCHAR(255),
+    status TINYINT NOT NULL DEFAULT 1,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE repair_category (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    category_name VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    sort_order INT NOT NULL DEFAULT 0,
     status TINYINT NOT NULL DEFAULT 1,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP

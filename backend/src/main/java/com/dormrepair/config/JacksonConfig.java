@@ -8,9 +8,6 @@ import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilde
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/**
- * Keeps API time fields consistent with the interface specification.
- */
 @Configuration
 public class JacksonConfig {
 

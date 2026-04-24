@@ -15,9 +15,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-/**
- * Centralizes API exception handling to keep response shapes consistent.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -61,7 +58,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public Result<Void> handleException(Exception ex) {
-        log.error("Unhandled exception", ex);
+        log.error("系统异常", ex);
         return Result.fail(ResultCode.INTERNAL_ERROR);
     }
 

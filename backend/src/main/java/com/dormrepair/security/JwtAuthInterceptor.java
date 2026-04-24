@@ -14,7 +14,6 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
     private static final Set<String> WHITE_LIST = Set.of(
         "/api/ping",
-        "/api/ping/hash",
         "/api/auth/login"
     );
 

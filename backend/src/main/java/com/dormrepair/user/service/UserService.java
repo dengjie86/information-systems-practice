@@ -1,6 +1,8 @@
 package com.dormrepair.user.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.dormrepair.common.exception.BusinessException;
+import com.dormrepair.common.result.ResultCode;
 import com.dormrepair.user.dto.UpdateDormRequest;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.mapper.UserMapper;
@@ -23,7 +25,7 @@ public class UserService {
     public void updateDormInfo(Long userId, UpdateDormRequest req) {
         UserEntity user = userMapper.selectById(userId);
         if (user == null) {
-            throw new RuntimeException("用户不存在");
+            throw new BusinessException(ResultCode.NOT_FOUND, "用户不存在");
         }
         user.setDormBuilding(req.dormBuilding());
         user.setDormRoom(req.dormRoom());
