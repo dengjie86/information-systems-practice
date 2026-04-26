@@ -77,7 +77,7 @@ import { useUserStore, type Role } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
   Odometer, Tickets, UserFilled, DataAnalysis, EditPen, Menu as MenuIcon, Tools,
-  Fold, Expand, CaretBottom, Search, Bell,
+  Fold, Expand, CaretBottom, Search, Bell, House,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -95,6 +95,7 @@ interface MenuItem {
 const menusByRole: Record<Role, MenuItem[]> = {
   STUDENT: [
     { path: '/home',          title: '工作台',   icon: markRaw(Odometer) },
+    { path: '/repair/dorm',   title: '宿舍信息', icon: markRaw(House) },
     { path: '/repair/create', title: '报修申请', icon: markRaw(EditPen) },
     { path: '/repair/list',   title: '我的工单', icon: markRaw(Tickets) },
   ],

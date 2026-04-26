@@ -26,16 +26,28 @@ const router = createRouter({
 
         // ---- 学生端 ----
         {
+          path: 'repair/dorm',
+          name: 'RepairDorm',
+          component: () => import('@/views/repair/dorm.vue'),
+          meta: { title: '宿舍信息', roles: ['STUDENT'] as Role[] },
+        },
+        {
           path: 'repair/create',
           name: 'RepairCreate',
-          component: Placeholder,
+          component: () => import('@/views/repair/create.vue'),
           meta: { title: '报修申请', roles: ['STUDENT'] as Role[] },
         },
         {
           path: 'repair/list',
           name: 'RepairList',
-          component: Placeholder,
+          component: () => import('@/views/repair/list.vue'),
           meta: { title: '我的工单', roles: ['STUDENT'] as Role[] },
+        },
+        {
+          path: 'repair/detail/:id',
+          name: 'RepairDetail',
+          component: () => import('@/views/repair/detail.vue'),
+          meta: { title: '工单详情', roles: ['STUDENT'] as Role[] },
         },
 
         // ---- 管理端 ----
