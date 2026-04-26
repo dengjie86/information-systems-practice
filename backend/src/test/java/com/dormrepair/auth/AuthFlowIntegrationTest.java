@@ -38,6 +38,7 @@ class AuthFlowIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM repair_order");
         jdbcTemplate.update("DELETE FROM `user`");
         jdbcTemplate.update(
             """
