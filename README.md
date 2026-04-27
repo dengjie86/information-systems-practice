@@ -20,8 +20,14 @@
 
 ```bash
 mysql -u root -p < database/schema.sql
-mysql -u root -p < database/init.sql
-mysql -u root -p < database/mock_data.sql   # 演示数据，可选
+mysql -u root -p dorm_repair < database/init.sql
+mysql -u root -p dorm_repair < database/mock_data.sql   # 演示数据，可选
+```
+
+如果本地已经是旧版数据库，再执行迁移脚本：
+
+```bash
+mysql -u root -p dorm_repair < database/migrations/20260428_add_dispatch_remark.sql
 ```
 
 ### 后端
