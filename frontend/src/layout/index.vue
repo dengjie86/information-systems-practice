@@ -144,7 +144,7 @@ const onCommand = async (cmd: string) => {
     confirmButtonText: '确认退出',
     cancelButtonText: '取消',
     type: 'warning',
-    customClass: 'logout-dialog',
+    customClass: 'app-confirm-dialog',
   })
   userStore.logout()
   sessionStorage.setItem('fromLogout', '1')

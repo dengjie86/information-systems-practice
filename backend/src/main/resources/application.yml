@@ -10,7 +10,6 @@ server:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 jwt:
   secret: dorm-repair-jwt-secret-key-please-change-in-production-2026

@@ -37,6 +37,8 @@ class AdminRepairOrderIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM evaluation");
+        jdbcTemplate.update("DELETE FROM repair_record");
         jdbcTemplate.update("DELETE FROM repair_order");
         jdbcTemplate.update("DELETE FROM repair_category");
         jdbcTemplate.update("DELETE FROM `user`");
@@ -200,11 +202,12 @@ class AdminRepairOrderIntegrationTest {
 
     @Test
     void 管理员可以审核通过并分派维修人员() throws Exception {
-        String token = loginAndGetToken("admin", "123456");
+        String adminToken = loginAndGetToken("admin", "123456");
+        String studentToken = loginAndGetToken("student1", "123456");
 
         mockMvc.perform(
                 post("/api/orders/admin/11/approve")
-                    .header("Authorization", "Bearer " + token)
+                    .header("Authorization", "Bearer " + adminToken)
                     .contentType("application/json")
                     .content("""
                         {
@@ -217,7 +220,7 @@ class AdminRepairOrderIntegrationTest {
 
         mockMvc.perform(
                 get("/api/orders/admin/11")
-                    .header("Authorization", "Bearer " + token)
+                    .header("Authorization", "Bearer " + adminToken)
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("PENDING_ASSIGN"))
@@ -225,12 +228,12 @@ class AdminRepairOrderIntegrationTest {
 
         mockMvc.perform(
                 post("/api/orders/admin/11/assign")
-                    .header("Authorization", "Bearer " + token)
+                    .header("Authorization", "Bearer " + adminToken)
                     .contentType("application/json")
                     .content("""
                         {
                           "workerId":3,
-                          "adminRemark":"今晚前上门处理"
+                          "dispatchRemark":"今晚前上门处理"
                         }
                         """)
             )
@@ -239,13 +242,23 @@ class AdminRepairOrderIntegrationTest {
 
         mockMvc.perform(
                 get("/api/orders/admin/11")
-                    .header("Authorization", "Bearer " + token)
+                    .header("Authorization", "Bearer " + adminToken)
             )
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("PENDING_ACCEPT"))
             .andExpect(jsonPath("$.data.assignedWorkerId").value(3))
             .andExpect(jsonPath("$.data.assignedWorkerName").value("王师傅"))
-            .andExpect(jsonPath("$.data.adminRemark").value("今晚前上门处理"));
+            .andExpect(jsonPath("$.data.adminRemark").value("信息已核实"))
+            .andExpect(jsonPath("$.data.dispatchRemark").value("今晚前上门处理"));
+
+        mockMvc.perform(
+                get("/api/orders/11")
+                    .header("Authorization", "Bearer " + studentToken)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("PENDING_ACCEPT"))
+            .andExpect(jsonPath("$.data.adminRemark").value("信息已核实"))
+            .andExpect(jsonPath("$.data.dispatchRemark").doesNotExist());
     }
 
     @Test
@@ -260,7 +273,7 @@ class AdminRepairOrderIntegrationTest {
                     .content("""
                         {
                           "rejectReason":"宿舍号和故障描述不完整",
-                          "adminRemark":"请补充现场照片"
+                          "adminRemark":"这条旧字段不应该再保存"
                         }
                         """)
             )
@@ -274,7 +287,7 @@ class AdminRepairOrderIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.status").value("REJECTED"))
             .andExpect(jsonPath("$.data.rejectReason").value("宿舍号和故障描述不完整"))
-            .andExpect(jsonPath("$.data.adminRemark").value("请补充现场照片"));
+            .andExpect(jsonPath("$.data.adminRemark").doesNotExist());
     }
 
     @Test
@@ -288,7 +301,7 @@ class AdminRepairOrderIntegrationTest {
                     .contentType("application/json")
                     .content("{}")
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
 
         mockMvc.perform(
@@ -301,7 +314,7 @@ class AdminRepairOrderIntegrationTest {
                         }
                         """)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value(409));
 
         mockMvc.perform(
@@ -314,7 +327,7 @@ class AdminRepairOrderIntegrationTest {
                         }
                         """)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value(409));
     }
 

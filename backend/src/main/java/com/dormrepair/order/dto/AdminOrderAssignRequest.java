@@ -1,5 +1,6 @@
 package com.dormrepair.order.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -8,12 +9,13 @@ public record AdminOrderAssignRequest(
     Long workerId,
 
     @Size(max = 255, message = "分派备注长度不能超过255个字符")
-    String adminRemark
+    @JsonAlias("adminRemark")
+    String dispatchRemark
 ) {
-    public String trimAdminRemark() {
-        if (adminRemark == null || adminRemark.trim().isEmpty()) {
+    public String trimDispatchRemark() {
+        if (dispatchRemark == null || dispatchRemark.trim().isEmpty()) {
             return null;
         }
-        return adminRemark.trim();
+        return dispatchRemark.trim();
     }
 }

@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS evaluation;
+DROP TABLE IF EXISTS repair_record;
 DROP TABLE IF EXISTS repair_order;
 DROP TABLE IF EXISTS repair_category;
 DROP TABLE IF EXISTS `user`;
@@ -43,6 +45,7 @@ CREATE TABLE repair_order (
     assigned_worker_id BIGINT,
     reject_reason VARCHAR(255),
     admin_remark VARCHAR(255),
+    dispatch_remark VARCHAR(255),
     submit_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     assign_time TIMESTAMP,
     accept_time TIMESTAMP,
@@ -55,3 +58,29 @@ CREATE TABLE repair_order (
     CONSTRAINT fk_order_category FOREIGN KEY (category_id) REFERENCES repair_category (id)
 );
 
+CREATE TABLE repair_record (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    worker_id BIGINT NOT NULL,
+    action_desc TEXT,
+    action_type VARCHAR(20) NOT NULL,
+    result_image VARCHAR(500),
+    status_before VARCHAR(20),
+    status_after VARCHAR(20),
+    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_record_order FOREIGN KEY (order_id) REFERENCES repair_order (id),
+    CONSTRAINT fk_record_worker FOREIGN KEY (worker_id) REFERENCES `user` (id)
+);
+
+CREATE TABLE evaluation (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    order_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    score TINYINT NOT NULL,
+    content VARCHAR(500),
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_eval_order_id UNIQUE (order_id),
+    CONSTRAINT fk_eval_order FOREIGN KEY (order_id) REFERENCES repair_order (id),
+    CONSTRAINT fk_eval_user FOREIGN KEY (user_id) REFERENCES `user` (id)
+);

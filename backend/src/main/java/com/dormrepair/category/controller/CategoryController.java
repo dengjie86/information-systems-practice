@@ -2,6 +2,7 @@ package com.dormrepair.category.controller;
 
 import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.service.CategoryService;
+import com.dormrepair.common.constant.UserRoles;
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.Result;
 import com.dormrepair.common.result.ResultCode;
@@ -55,9 +56,16 @@ public class CategoryController {
         return Result.success();
     }
 
+    @DeleteMapping("/{id}")
+    public Result<?> delete(@PathVariable Long id) {
+        checkAdmin();
+        categoryService.deleteUnused(id);
+        return Result.success();
+    }
+
     private void checkAdmin() {
         LoginUser user = LoginUserContext.requireUser();
-        if (!"ADMIN".equals(user.role())) {
+        if (!UserRoles.ADMIN.equals(user.role())) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权访问");
         }
     }

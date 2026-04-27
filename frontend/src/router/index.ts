@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import type { Role } from '@/stores/user'
+import { useUserStore, type Role } from '@/stores/user'
 
 const Placeholder = () => import('@/views/placeholder.vue')
 
@@ -54,19 +54,19 @@ const router = createRouter({
         {
           path: 'order/list',
           name: 'OrderList',
-          component: Placeholder,
+          component: () => import('@/views/admin/orders.vue'),
           meta: { title: '工单管理', roles: ['ADMIN'] as Role[] },
         },
         {
           path: 'user/list',
           name: 'UserList',
-          component: Placeholder,
+          component: () => import('@/views/admin/users.vue'),
           meta: { title: '用户管理', roles: ['ADMIN'] as Role[] },
         },
         {
           path: 'category',
           name: 'Category',
-          component: Placeholder,
+          component: () => import('@/views/admin/categories.vue'),
           meta: { title: '故障分类', roles: ['ADMIN'] as Role[] },
         },
         {
@@ -101,9 +101,13 @@ router.beforeEach((to, _from, next) => {
   // 角色权限校验
   const roles = to.meta.roles as Role[] | undefined
   if (roles?.length) {
-    const raw = localStorage.getItem('userInfo')
-    const role = raw ? (JSON.parse(raw) as { role: Role }).role : null
-    if (role && !roles.includes(role)) {
+    const userStore = useUserStore()
+    const role = userStore.role
+    if (!role) {
+      userStore.logout()
+      return next('/login')
+    }
+    if (!roles.includes(role)) {
       return next('/home')
     }
   }

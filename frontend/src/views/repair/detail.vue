@@ -34,7 +34,9 @@
       <section class="panel">
         <header>
           <h2>问题描述</h2>
-          <el-tag :type="statusMap[detail.status]?.type">{{ statusMap[detail.status]?.label }}</el-tag>
+          <el-tag :type="statusMap[detail.status]?.type" :class="statusClass(detail.status)">
+            {{ statusMap[detail.status]?.label }}
+          </el-tag>
         </header>
         <p class="desc">{{ detail.description || '未填写问题描述' }}</p>
 
@@ -73,7 +75,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import { getOrderDetail, type RepairOrder } from '@/api/repair'
-import { formatTime, priorityMap, statusMap } from './meta'
+import { formatTime, priorityMap, statusClass, statusMap } from './meta'
 
 const route = useRoute()
 const router = useRouter()

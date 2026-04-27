@@ -1,6 +1,7 @@
 package com.dormrepair.user;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -38,6 +39,8 @@ class UserCategoryIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM evaluation");
+        jdbcTemplate.update("DELETE FROM repair_record");
         jdbcTemplate.update("DELETE FROM repair_order");
         jdbcTemplate.update("DELETE FROM repair_category");
         jdbcTemplate.update("DELETE FROM `user`");
@@ -159,14 +162,14 @@ class UserCategoryIntegrationTest {
                 get("/api/user/list")
                     .header("Authorization", "Bearer " + token)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
 
         mockMvc.perform(
                 get("/api/category/all")
                     .header("Authorization", "Bearer " + token)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
     }
 
@@ -200,6 +203,51 @@ class UserCategoryIntegrationTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.code").value(200))
             .andExpect(jsonPath("$.data.length()").value(3));
+    }
+
+    @Test
+    void shouldAllowAdminDeleteOnlyUnusedCategories() throws Exception {
+        String token = loginAndGetToken("admin", "123456");
+
+        jdbcTemplate.update(
+            """
+                INSERT INTO repair_order
+                (id, order_no, user_id, title, category_id, dorm_building, dorm_room, status, priority)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+            21L,
+            "WO202604280021",
+            2L,
+            "水管漏水",
+            1L,
+            "1号楼",
+            "101",
+            "PENDING_AUDIT",
+            "NORMAL"
+        );
+
+        mockMvc.perform(
+                delete("/api/category/2")
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+
+        mockMvc.perform(
+                delete("/api/category/1")
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.code").value(409))
+            .andExpect(jsonPath("$.msg").value("删除失败：该分类已被工单使用"));
+
+        mockMvc.perform(
+                get("/api/category/all")
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.length()").value(1))
+            .andExpect(jsonPath("$.data[0].id").value(1));
     }
 
     private String loginAndGetToken(String username, String password) throws Exception {

@@ -1,6 +1,7 @@
 package com.dormrepair.user.controller;
 
 import com.dormrepair.auth.vo.LoginUserInfo;
+import com.dormrepair.common.constant.UserRoles;
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.Result;
 import com.dormrepair.common.result.ResultCode;
@@ -36,7 +37,7 @@ public class UserController {
     @PutMapping("/dorm")
     public Result<?> updateDorm(@Valid @RequestBody UpdateDormRequest req) {
         LoginUser loginUser = LoginUserContext.requireUser();
-        if (!"STUDENT".equals(loginUser.role())) {
+        if (!UserRoles.STUDENT.equals(loginUser.role())) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以维护宿舍信息");
         }
         userService.updateDormInfo(loginUser.userId(), req);
@@ -47,7 +48,7 @@ public class UserController {
     @GetMapping("/list")
     public Result<List<LoginUserInfo>> list() {
         LoginUser loginUser = LoginUserContext.requireUser();
-        if (!"ADMIN".equals(loginUser.role())) {
+        if (!UserRoles.ADMIN.equals(loginUser.role())) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权访问");
         }
         List<LoginUserInfo> list = userService.listAll().stream()
@@ -59,12 +60,11 @@ public class UserController {
     @GetMapping("/workers")
     public Result<List<LoginUserInfo>> workers() {
         LoginUser loginUser = LoginUserContext.requireUser();
-        if (!"ADMIN".equals(loginUser.role())) {
+        if (!UserRoles.ADMIN.equals(loginUser.role())) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权访问");
         }
-        List<LoginUserInfo> list = userService.listByRole("WORKER").stream()
+        List<LoginUserInfo> list = userService.listByRole(UserRoles.WORKER).stream()
             .map(LoginUserInfo::from).toList();
         return Result.success(list);
     }
 }
-

@@ -5,6 +5,8 @@ import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.mapper.RepairCategoryMapper;
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.ResultCode;
+import com.dormrepair.order.entity.RepairOrderEntity;
+import com.dormrepair.order.mapper.RepairOrderMapper;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -12,9 +14,11 @@ import org.springframework.stereotype.Service;
 public class CategoryService {
 
     private final RepairCategoryMapper categoryMapper;
+    private final RepairOrderMapper repairOrderMapper;
 
-    public CategoryService(RepairCategoryMapper categoryMapper) {
+    public CategoryService(RepairCategoryMapper categoryMapper, RepairOrderMapper repairOrderMapper) {
         this.categoryMapper = categoryMapper;
+        this.repairOrderMapper = repairOrderMapper;
     }
 
     public List<RepairCategoryEntity> listEnabled() {
@@ -63,6 +67,20 @@ public class CategoryService {
         }
         cat.setStatus(status);
         categoryMapper.updateById(cat);
+    }
+
+    public void deleteUnused(Long id) {
+        RepairCategoryEntity cat = categoryMapper.selectById(id);
+        if (cat == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "分类不存在");
+        }
+        Long usedCount = repairOrderMapper.selectCount(
+            new QueryWrapper<RepairOrderEntity>().eq("category_id", id)
+        );
+        if (usedCount > 0) {
+            throw new BusinessException(ResultCode.CONFLICT, "删除失败：该分类已被工单使用");
+        }
+        categoryMapper.deleteById(id);
     }
 
     private void assertCategoryNameUnique(String categoryName, Long excludeId) {

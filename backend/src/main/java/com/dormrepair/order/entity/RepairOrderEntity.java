@@ -25,6 +25,7 @@ public class RepairOrderEntity {
     private Long assignedWorkerId;
     private String rejectReason;
     private String adminRemark;
+    private String dispatchRemark;
     private LocalDateTime submitTime;
     private LocalDateTime assignTime;
     private LocalDateTime acceptTime;

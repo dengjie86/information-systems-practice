@@ -38,6 +38,8 @@ class AuthFlowIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM evaluation");
+        jdbcTemplate.update("DELETE FROM repair_record");
         jdbcTemplate.update("DELETE FROM repair_order");
         jdbcTemplate.update("DELETE FROM `user`");
         jdbcTemplate.update(
@@ -88,8 +90,7 @@ class AuthFlowIntegrationTest {
     @Test
     void shouldRejectWhenTokenMissing() throws Exception {
         mockMvc.perform(get("/api/user/me"))
-            .andExpect(status().isOk())
+            .andExpect(status().isUnauthorized())
             .andExpect(jsonPath("$.code").value(401));
     }
 }
-

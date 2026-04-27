@@ -37,6 +37,8 @@ class StudentRepairOrderIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        jdbcTemplate.update("DELETE FROM evaluation");
+        jdbcTemplate.update("DELETE FROM repair_record");
         jdbcTemplate.update("DELETE FROM repair_order");
         jdbcTemplate.update("DELETE FROM repair_category");
         jdbcTemplate.update("DELETE FROM `user`");
@@ -227,14 +229,14 @@ class StudentRepairOrderIntegrationTest {
                         }
                         """)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isConflict())
             .andExpect(jsonPath("$.code").value(409));
 
         mockMvc.perform(
                 get("/api/orders/12")
                     .header("Authorization", "Bearer " + token)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
     }
 
@@ -246,7 +248,7 @@ class StudentRepairOrderIntegrationTest {
                 get("/api/orders/my")
                     .header("Authorization", "Bearer " + token)
             )
-            .andExpect(status().isOk())
+            .andExpect(status().isForbidden())
             .andExpect(jsonPath("$.code").value(403));
     }
 

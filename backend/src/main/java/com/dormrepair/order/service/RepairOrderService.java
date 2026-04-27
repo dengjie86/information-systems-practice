@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.mapper.RepairCategoryMapper;
+import com.dormrepair.common.constant.OrderStatuses;
+import com.dormrepair.common.constant.UserRoles;
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.PageResult;
 import com.dormrepair.common.result.ResultCode;
@@ -34,13 +36,6 @@ import org.springframework.util.StringUtils;
 @Service
 public class RepairOrderService {
 
-    private static final String ROLE_ADMIN = "ADMIN";
-    private static final String ROLE_STUDENT = "STUDENT";
-    private static final String ROLE_WORKER = "WORKER";
-    private static final String STATUS_PENDING_AUDIT = "PENDING_AUDIT";
-    private static final String STATUS_PENDING_ASSIGN = "PENDING_ASSIGN";
-    private static final String STATUS_PENDING_ACCEPT = "PENDING_ACCEPT";
-    private static final String STATUS_REJECTED = "REJECTED";
     private static final DateTimeFormatter ORDER_NO_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final RepairOrderMapper repairOrderMapper;
@@ -59,7 +54,7 @@ public class RepairOrderService {
 
     @Transactional
     public CreateRepairOrderResponse create(Long loginUserId, String role, CreateRepairOrderRequest request) {
-        if (!ROLE_STUDENT.equals(role)) {
+        if (!UserRoles.STUDENT.equals(role)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以提交报修工单");
         }
 
@@ -93,7 +88,7 @@ public class RepairOrderService {
         } else if (StringUtils.hasText(student.getPhone())) {
             order.setContactPhone(student.getPhone().trim());
         }
-        order.setStatus(STATUS_PENDING_AUDIT);
+        order.setStatus(OrderStatuses.PENDING_AUDIT);
         order.setPriority(StringUtils.hasText(request.priority()) ? request.priority() : "NORMAL");
         order.setSubmitTime(LocalDateTime.now());
         repairOrderMapper.insert(order);
@@ -102,7 +97,7 @@ public class RepairOrderService {
     }
 
     public PageResult<RepairOrderListItemVO> pageMyOrders(Long loginUserId, String role, long pageNum, long pageSize, String status) {
-        if (!ROLE_STUDENT.equals(role)) {
+        if (!UserRoles.STUDENT.equals(role)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以查看自己的工单");
         }
 
@@ -123,7 +118,7 @@ public class RepairOrderService {
     }
 
     public RepairOrderDetailVO getMyOrderDetail(Long loginUserId, String role, Long orderId) {
-        if (!ROLE_STUDENT.equals(role)) {
+        if (!UserRoles.STUDENT.equals(role)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以查看自己的工单");
         }
 
@@ -182,8 +177,8 @@ public class RepairOrderService {
     @Transactional
     public void approveOrder(String role, Long orderId, AdminOrderAuditRequest request) {
         checkAdmin(role);
-        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_AUDIT, "只有待审核工单才可以审核通过");
-        order.setStatus(STATUS_PENDING_ASSIGN);
+        RepairOrderEntity order = getOrderForAdminAction(orderId, OrderStatuses.PENDING_AUDIT, "只有待审核工单才可以审核通过");
+        order.setStatus(OrderStatuses.PENDING_ASSIGN);
         order.setRejectReason(null);
         order.setAdminRemark(request == null ? null : request.trimAdminRemark());
         repairOrderMapper.updateById(order);
@@ -192,34 +187,34 @@ public class RepairOrderService {
     @Transactional
     public void rejectOrder(String role, Long orderId, AdminOrderAuditRequest request) {
         checkAdmin(role);
-        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_AUDIT, "只有待审核工单才可以驳回");
+        RepairOrderEntity order = getOrderForAdminAction(orderId, OrderStatuses.PENDING_AUDIT, "只有待审核工单才可以驳回");
         String rejectReason;
         try {
             rejectReason = request.requireRejectReason();
         } catch (IllegalArgumentException ex) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "驳回原因不能为空");
         }
-        order.setStatus(STATUS_REJECTED);
+        order.setStatus(OrderStatuses.REJECTED);
         order.setAssignedWorkerId(null);
         order.setAssignTime(null);
         order.setRejectReason(rejectReason);
-        order.setAdminRemark(request.trimAdminRemark());
+        order.setAdminRemark(null);
         repairOrderMapper.updateById(order);
     }
 
     @Transactional
     public void assignOrder(String role, Long orderId, AdminOrderAssignRequest request) {
         checkAdmin(role);
-        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_ASSIGN, "只有待分派工单才可以分派维修人员");
+        RepairOrderEntity order = getOrderForAdminAction(orderId, OrderStatuses.PENDING_ASSIGN, "只有待分派工单才可以分派维修人员");
         UserEntity worker = userMapper.selectById(request.workerId());
-        if (worker == null || !ROLE_WORKER.equals(worker.getRole()) || worker.getStatus() == null || worker.getStatus() != 1) {
+        if (worker == null || !UserRoles.WORKER.equals(worker.getRole()) || worker.getStatus() == null || worker.getStatus() != 1) {
             throw new BusinessException(ResultCode.CONFLICT, "维修人员不存在或不可用");
         }
 
         order.setAssignedWorkerId(worker.getId());
         order.setAssignTime(LocalDateTime.now());
-        order.setStatus(STATUS_PENDING_ACCEPT);
-        order.setAdminRemark(request.trimAdminRemark());
+        order.setStatus(OrderStatuses.PENDING_ACCEPT);
+        order.setDispatchRemark(request.trimDispatchRemark());
         repairOrderMapper.updateById(order);
     }
 
@@ -319,6 +314,7 @@ public class RepairOrderService {
             worker == null ? null : worker.getRealName(),
             order.getRejectReason(),
             order.getAdminRemark(),
+            order.getDispatchRemark(),
             order.getSubmitTime(),
             order.getAssignTime()
         );
@@ -350,6 +346,7 @@ public class RepairOrderService {
             worker == null ? null : worker.getRealName(),
             order.getRejectReason(),
             order.getAdminRemark(),
+            order.getDispatchRemark(),
             order.getSubmitTime(),
             order.getAssignTime(),
             order.getAcceptTime(),
@@ -359,7 +356,7 @@ public class RepairOrderService {
     }
 
     private void checkAdmin(String role) {
-        if (!ROLE_ADMIN.equals(role)) {
+        if (!UserRoles.ADMIN.equals(role)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅管理员可以执行该操作");
         }
     }

@@ -59,6 +59,7 @@ CREATE TABLE repair_order (
     assigned_worker_id BIGINT DEFAULT NULL,
     reject_reason VARCHAR(255) DEFAULT NULL,
     admin_remark VARCHAR(255) DEFAULT NULL,
+    dispatch_remark VARCHAR(255) DEFAULT NULL,
     submit_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     assign_time DATETIME DEFAULT NULL,
     accept_time DATETIME DEFAULT NULL,

@@ -18,6 +18,7 @@ public record AdminRepairOrderListItemVO(
     String assignedWorkerName,
     String rejectReason,
     String adminRemark,
+    String dispatchRemark,
     LocalDateTime submitTime,
     LocalDateTime assignTime
 ) {

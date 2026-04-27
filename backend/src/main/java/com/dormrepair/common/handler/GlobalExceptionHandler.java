@@ -8,6 +8,9 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -21,26 +24,27 @@ public class GlobalExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BusinessException.class)
-    public Result<Void> handleBusinessException(BusinessException ex) {
-        return Result.fail(resolveResultCode(ex.getCode()), ex.getMessage());
+    public ResponseEntity<Result<Void>> handleBusinessException(BusinessException ex) {
+        ResultCode resultCode = resolveResultCode(ex.getCode());
+        return fail(resultCode, ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Result<Void> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Result<Void>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : ResultCode.BAD_REQUEST.getMessage();
-        return Result.fail(ResultCode.BAD_REQUEST, message);
+        return fail(ResultCode.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(BindException.class)
-    public Result<Void> handleBindException(BindException ex) {
+    public ResponseEntity<Result<Void>> handleBindException(BindException ex) {
         FieldError fieldError = ex.getBindingResult().getFieldError();
         String message = fieldError != null ? fieldError.getDefaultMessage() : ResultCode.BAD_REQUEST.getMessage();
-        return Result.fail(ResultCode.BAD_REQUEST, message);
+        return fail(ResultCode.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public Result<Void> handleConstraintViolationException(ConstraintViolationException ex) {
+    public ResponseEntity<Result<Void>> handleConstraintViolationException(ConstraintViolationException ex) {
         String message = ex.getConstraintViolations()
             .stream()
             .map(ConstraintViolation::getMessage)
@@ -48,18 +52,24 @@ public class GlobalExceptionHandler {
         if (message.isBlank()) {
             message = ResultCode.BAD_REQUEST.getMessage();
         }
-        return Result.fail(ResultCode.BAD_REQUEST, message);
+        return fail(ResultCode.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public Result<Void> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
-        return Result.fail(ResultCode.BAD_REQUEST, "请求体格式错误或缺少必要参数");
+    public ResponseEntity<Result<Void>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+        return fail(ResultCode.BAD_REQUEST, "请求体格式错误或缺少必要参数");
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Result<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+        log.warn("数据关联约束导致操作失败", ex);
+        return fail(ResultCode.CONFLICT, "删除失败：该数据已被业务记录使用");
     }
 
     @ExceptionHandler(Exception.class)
-    public Result<Void> handleException(Exception ex) {
+    public ResponseEntity<Result<Void>> handleException(Exception ex) {
         log.error("系统异常", ex);
-        return Result.fail(ResultCode.INTERNAL_ERROR);
+        return fail(ResultCode.INTERNAL_ERROR, ResultCode.INTERNAL_ERROR.getMessage());
     }
 
     private ResultCode resolveResultCode(Integer code) {
@@ -69,5 +79,13 @@ public class GlobalExceptionHandler {
             }
         }
         return ResultCode.INTERNAL_ERROR;
+    }
+
+    private ResponseEntity<Result<Void>> fail(ResultCode code, String message) {
+        HttpStatus status = HttpStatus.resolve(code.getCode());
+        if (status == null) {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+        }
+        return ResponseEntity.status(status).body(Result.fail(code, message));
     }
 }

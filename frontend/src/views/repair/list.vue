@@ -23,7 +23,9 @@
           <div class="order-main">
             <div class="order-top">
               <span class="order-no">{{ item.orderNo }}</span>
-              <el-tag :type="statusMap[item.status]?.type" effect="light">{{ statusMap[item.status]?.label }}</el-tag>
+              <el-tag :type="statusMap[item.status]?.type" :class="statusClass(item.status)" effect="light">
+                {{ statusMap[item.status]?.label }}
+              </el-tag>
             </div>
             <h3>{{ item.title }}</h3>
             <div class="meta">
@@ -58,7 +60,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, Plus } from '@element-plus/icons-vue'
 import { getMyOrders, type OrderStatus, type RepairOrder } from '@/api/repair'
-import { formatTime, priorityMap, statusMap } from './meta'
+import { formatTime, priorityMap, statusClass, statusMap } from './meta'
 
 const router = useRouter()
 const loading = ref(false)
@@ -74,10 +76,13 @@ const query = reactive({
 const statusFilters = [
   { label: '全部', value: '' },
   { label: '待审核', value: 'PENDING_AUDIT' },
+  { label: '待分派', value: 'PENDING_ASSIGN' },
+  { label: '待接单', value: 'PENDING_ACCEPT' },
   { label: '已驳回', value: 'REJECTED' },
   { label: '处理中', value: 'PROCESSING' },
   { label: '待确认', value: 'PENDING_CONFIRM' },
   { label: '已完成', value: 'COMPLETED' },
+  { label: '已关闭', value: 'CLOSED' },
 ]
 
 const loadOrders = async () => {
