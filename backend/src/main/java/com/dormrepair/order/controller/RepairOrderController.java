@@ -2,8 +2,12 @@ package com.dormrepair.order.controller;
 
 import com.dormrepair.common.result.PageResult;
 import com.dormrepair.common.result.Result;
+import com.dormrepair.order.dto.AdminOrderAssignRequest;
+import com.dormrepair.order.dto.AdminOrderAuditRequest;
 import com.dormrepair.order.dto.CreateRepairOrderRequest;
 import com.dormrepair.order.service.RepairOrderService;
+import com.dormrepair.order.vo.AdminRepairOrderDetailVO;
+import com.dormrepair.order.vo.AdminRepairOrderListItemVO;
 import com.dormrepair.order.vo.CreateRepairOrderResponse;
 import com.dormrepair.order.vo.RepairOrderDetailVO;
 import com.dormrepair.order.vo.RepairOrderListItemVO;
@@ -52,5 +56,44 @@ public class RepairOrderController {
     public Result<RepairOrderDetailVO> detail(@PathVariable Long id) {
         LoginUser loginUser = LoginUserContext.requireUser();
         return Result.success(repairOrderService.getMyOrderDetail(loginUser.userId(), loginUser.role(), id));
+    }
+
+    @GetMapping("/admin")
+    public Result<PageResult<AdminRepairOrderListItemVO>> adminOrders(
+        @RequestParam(defaultValue = "1") @Min(value = 1, message = "pageNum must be >= 1") long pageNum,
+        @RequestParam(defaultValue = "10") @Min(value = 1, message = "pageSize must be >= 1") @Max(value = 100, message = "pageSize must be <= 100") long pageSize,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) Long userId,
+        @RequestParam(required = false) Long assignedWorkerId
+    ) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        return Result.success(repairOrderService.pageAdminOrders(loginUser.role(), pageNum, pageSize, status, userId, assignedWorkerId));
+    }
+
+    @GetMapping("/admin/{id}")
+    public Result<AdminRepairOrderDetailVO> adminDetail(@PathVariable Long id) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        return Result.success(repairOrderService.getAdminOrderDetail(loginUser.role(), id));
+    }
+
+    @PostMapping("/admin/{id}/approve")
+    public Result<Void> approve(@PathVariable Long id, @Valid @RequestBody(required = false) AdminOrderAuditRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.approveOrder(loginUser.role(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/admin/{id}/reject")
+    public Result<Void> reject(@PathVariable Long id, @Valid @RequestBody AdminOrderAuditRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.rejectOrder(loginUser.role(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/admin/{id}/assign")
+    public Result<Void> assign(@PathVariable Long id, @Valid @RequestBody AdminOrderAssignRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.assignOrder(loginUser.role(), id, request);
+        return Result.success();
     }
 }

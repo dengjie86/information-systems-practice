@@ -7,14 +7,19 @@ import com.dormrepair.category.mapper.RepairCategoryMapper;
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.PageResult;
 import com.dormrepair.common.result.ResultCode;
+import com.dormrepair.order.dto.AdminOrderAssignRequest;
+import com.dormrepair.order.dto.AdminOrderAuditRequest;
 import com.dormrepair.order.dto.CreateRepairOrderRequest;
 import com.dormrepair.order.entity.RepairOrderEntity;
 import com.dormrepair.order.mapper.RepairOrderMapper;
+import com.dormrepair.order.vo.AdminRepairOrderDetailVO;
+import com.dormrepair.order.vo.AdminRepairOrderListItemVO;
 import com.dormrepair.order.vo.CreateRepairOrderResponse;
 import com.dormrepair.order.vo.RepairOrderDetailVO;
 import com.dormrepair.order.vo.RepairOrderListItemVO;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.mapper.UserMapper;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -29,8 +34,13 @@ import org.springframework.util.StringUtils;
 @Service
 public class RepairOrderService {
 
+    private static final String ROLE_ADMIN = "ADMIN";
     private static final String ROLE_STUDENT = "STUDENT";
+    private static final String ROLE_WORKER = "WORKER";
     private static final String STATUS_PENDING_AUDIT = "PENDING_AUDIT";
+    private static final String STATUS_PENDING_ASSIGN = "PENDING_ASSIGN";
+    private static final String STATUS_PENDING_ACCEPT = "PENDING_ACCEPT";
+    private static final String STATUS_REJECTED = "REJECTED";
     private static final DateTimeFormatter ORDER_NO_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final RepairOrderMapper repairOrderMapper;
@@ -129,6 +139,90 @@ public class RepairOrderService {
         return toDetail(order, category);
     }
 
+    public PageResult<AdminRepairOrderListItemVO> pageAdminOrders(
+        String role,
+        long pageNum,
+        long pageSize,
+        String status,
+        Long userId,
+        Long assignedWorkerId
+    ) {
+        checkAdmin(role);
+
+        LambdaQueryWrapper<RepairOrderEntity> queryWrapper = new LambdaQueryWrapper<RepairOrderEntity>()
+            .eq(StringUtils.hasText(status), RepairOrderEntity::getStatus, status)
+            .eq(userId != null, RepairOrderEntity::getUserId, userId)
+            .eq(assignedWorkerId != null, RepairOrderEntity::getAssignedWorkerId, assignedWorkerId)
+            .orderByDesc(RepairOrderEntity::getSubmitTime)
+            .orderByDesc(RepairOrderEntity::getId);
+
+        Page<RepairOrderEntity> page = repairOrderMapper.selectPage(new Page<>(pageNum, pageSize), queryWrapper);
+        Map<Long, RepairCategoryEntity> categoryMap = loadCategories(page.getRecords());
+        Map<Long, UserEntity> userMap = loadUsers(page.getRecords());
+
+        List<AdminRepairOrderListItemVO> records = page.getRecords().stream()
+            .map(order -> toAdminListItem(order, categoryMap.get(order.getCategoryId()), userMap))
+            .toList();
+        return new PageResult<>(records, page.getTotal(), pageNum, pageSize);
+    }
+
+    public AdminRepairOrderDetailVO getAdminOrderDetail(String role, Long orderId) {
+        checkAdmin(role);
+
+        RepairOrderEntity order = repairOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "工单不存在");
+        }
+
+        RepairCategoryEntity category = categoryMapper.selectById(order.getCategoryId());
+        Map<Long, UserEntity> userMap = loadUsers(List.of(order));
+        return toAdminDetail(order, category, userMap);
+    }
+
+    @Transactional
+    public void approveOrder(String role, Long orderId, AdminOrderAuditRequest request) {
+        checkAdmin(role);
+        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_AUDIT, "只有待审核工单才可以审核通过");
+        order.setStatus(STATUS_PENDING_ASSIGN);
+        order.setRejectReason(null);
+        order.setAdminRemark(request == null ? null : request.trimAdminRemark());
+        repairOrderMapper.updateById(order);
+    }
+
+    @Transactional
+    public void rejectOrder(String role, Long orderId, AdminOrderAuditRequest request) {
+        checkAdmin(role);
+        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_AUDIT, "只有待审核工单才可以驳回");
+        String rejectReason;
+        try {
+            rejectReason = request.requireRejectReason();
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "驳回原因不能为空");
+        }
+        order.setStatus(STATUS_REJECTED);
+        order.setAssignedWorkerId(null);
+        order.setAssignTime(null);
+        order.setRejectReason(rejectReason);
+        order.setAdminRemark(request.trimAdminRemark());
+        repairOrderMapper.updateById(order);
+    }
+
+    @Transactional
+    public void assignOrder(String role, Long orderId, AdminOrderAssignRequest request) {
+        checkAdmin(role);
+        RepairOrderEntity order = getOrderForAdminAction(orderId, STATUS_PENDING_ASSIGN, "只有待分派工单才可以分派维修人员");
+        UserEntity worker = userMapper.selectById(request.workerId());
+        if (worker == null || !ROLE_WORKER.equals(worker.getRole()) || worker.getStatus() == null || worker.getStatus() != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "维修人员不存在或不可用");
+        }
+
+        order.setAssignedWorkerId(worker.getId());
+        order.setAssignTime(LocalDateTime.now());
+        order.setStatus(STATUS_PENDING_ACCEPT);
+        order.setAdminRemark(request.trimAdminRemark());
+        repairOrderMapper.updateById(order);
+    }
+
     private Map<Long, RepairCategoryEntity> loadCategories(List<RepairOrderEntity> orders) {
         List<Long> categoryIds = orders.stream()
             .map(RepairOrderEntity::getCategoryId)
@@ -140,6 +234,23 @@ public class RepairOrderService {
         }
         return categoryMapper.selectBatchIds(categoryIds).stream()
             .collect(Collectors.toMap(RepairCategoryEntity::getId, Function.identity()));
+    }
+
+    private Map<Long, UserEntity> loadUsers(List<RepairOrderEntity> orders) {
+        List<Long> userIds = new ArrayList<>();
+        for (RepairOrderEntity order : orders) {
+            if (order.getUserId() != null) {
+                userIds.add(order.getUserId());
+            }
+            if (order.getAssignedWorkerId() != null) {
+                userIds.add(order.getAssignedWorkerId());
+            }
+        }
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return userMapper.selectBatchIds(userIds.stream().distinct().toList()).stream()
+            .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
     }
 
     private RepairOrderListItemVO toListItem(RepairOrderEntity order, RepairCategoryEntity category) {
@@ -183,6 +294,85 @@ public class RepairOrderService {
             order.getFinishTime(),
             order.getCloseTime()
         );
+    }
+
+    private AdminRepairOrderListItemVO toAdminListItem(
+        RepairOrderEntity order,
+        RepairCategoryEntity category,
+        Map<Long, UserEntity> userMap
+    ) {
+        UserEntity student = userMap.get(order.getUserId());
+        UserEntity worker = userMap.get(order.getAssignedWorkerId());
+        return new AdminRepairOrderListItemVO(
+            order.getId(),
+            order.getOrderNo(),
+            order.getUserId(),
+            student == null ? null : student.getRealName(),
+            order.getTitle(),
+            order.getCategoryId(),
+            category == null ? null : category.getCategoryName(),
+            order.getDormBuilding(),
+            order.getDormRoom(),
+            order.getStatus(),
+            order.getPriority(),
+            order.getAssignedWorkerId(),
+            worker == null ? null : worker.getRealName(),
+            order.getRejectReason(),
+            order.getAdminRemark(),
+            order.getSubmitTime(),
+            order.getAssignTime()
+        );
+    }
+
+    private AdminRepairOrderDetailVO toAdminDetail(
+        RepairOrderEntity order,
+        RepairCategoryEntity category,
+        Map<Long, UserEntity> userMap
+    ) {
+        UserEntity student = userMap.get(order.getUserId());
+        UserEntity worker = userMap.get(order.getAssignedWorkerId());
+        return new AdminRepairOrderDetailVO(
+            order.getId(),
+            order.getOrderNo(),
+            order.getUserId(),
+            student == null ? null : student.getRealName(),
+            order.getTitle(),
+            order.getCategoryId(),
+            category == null ? null : category.getCategoryName(),
+            order.getDescription(),
+            order.getImageUrl(),
+            order.getDormBuilding(),
+            order.getDormRoom(),
+            order.getContactPhone(),
+            order.getStatus(),
+            order.getPriority(),
+            order.getAssignedWorkerId(),
+            worker == null ? null : worker.getRealName(),
+            order.getRejectReason(),
+            order.getAdminRemark(),
+            order.getSubmitTime(),
+            order.getAssignTime(),
+            order.getAcceptTime(),
+            order.getFinishTime(),
+            order.getCloseTime()
+        );
+    }
+
+    private void checkAdmin(String role) {
+        if (!ROLE_ADMIN.equals(role)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "仅管理员可以执行该操作");
+        }
+    }
+
+    private RepairOrderEntity getOrderForAdminAction(Long orderId, String expectedStatus, String message) {
+        RepairOrderEntity order = repairOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "工单不存在");
+        }
+        if (!expectedStatus.equals(order.getStatus())) {
+            throw new BusinessException(ResultCode.CONFLICT, message);
+        }
+        return order;
     }
 
     private String generateOrderNo() {
