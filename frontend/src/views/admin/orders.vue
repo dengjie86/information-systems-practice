@@ -86,6 +86,14 @@ const activeCount = computed(() =>
   orders.value.filter(item => !['COMPLETED', 'CLOSED', 'REJECTED'].includes(item.status)).length
 )
 
+const selectedStatusLabel = computed(() =>
+  statusFilters.find(item => item.value === query.status)?.label ?? '该状态'
+)
+
+const tableEmptyText = computed(() =>
+  query.status ? `暂无${selectedStatusLabel.value}工单` : '暂无工单数据'
+)
+
 async function loadOrders() {
   loading.value = true
   try {
@@ -224,7 +232,7 @@ onMounted(() => {
     </section>
 
     <section class="panel" v-loading="loading">
-      <el-table :data="orders" row-key="id" class="table" @row-dblclick="openDetail">
+      <el-table :data="orders" row-key="id" class="table" :empty-text="tableEmptyText" @row-dblclick="openDetail">
         <el-table-column prop="orderNo" label="工单号" min-width="150" />
         <el-table-column prop="title" label="报修内容" min-width="180">
           <template #default="{ row }">

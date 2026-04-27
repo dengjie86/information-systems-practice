@@ -175,7 +175,7 @@ onMounted(loadCategories)
     </section>
 
     <section class="panel" v-loading="loading">
-      <el-table :data="categories" row-key="id">
+      <el-table :data="categories" row-key="id" empty-text="暂无分类数据">
         <el-table-column prop="categoryName" label="分类名称" min-width="160" />
         <el-table-column prop="description" label="说明" min-width="220">
           <template #default="{ row }">{{ row.description || '-' }}</template>

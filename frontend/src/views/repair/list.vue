@@ -14,8 +14,10 @@
     </section>
 
     <section class="panel" v-loading="loading">
-      <el-empty v-if="!loading && !orders.length" description="暂无工单记录">
-        <el-button type="primary" @click="router.push('/repair/create')">提交第一条报修</el-button>
+      <el-empty v-if="!loading && !orders.length" :description="emptyDescription">
+        <el-button v-if="showCreateEmptyAction" type="primary" @click="router.push('/repair/create')">
+          提交第一条报修
+        </el-button>
       </el-empty>
 
       <div v-else class="order-list">
@@ -56,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, Plus } from '@element-plus/icons-vue'
 import { getMyOrders, type OrderStatus, type RepairOrder } from '@/api/repair'
@@ -82,8 +84,17 @@ const statusFilters = [
   { label: '处理中', value: 'PROCESSING' },
   { label: '待确认', value: 'PENDING_CONFIRM' },
   { label: '已完成', value: 'COMPLETED' },
-  { label: '已关闭', value: 'CLOSED' },
 ]
+
+const selectedStatusLabel = computed(() =>
+  statusFilters.find(item => item.value === query.status)?.label ?? '该状态'
+)
+
+const emptyDescription = computed(() =>
+  query.status ? `暂无${selectedStatusLabel.value}工单` : '暂无工单记录'
+)
+
+const showCreateEmptyAction = computed(() => !query.status)
 
 const loadOrders = async () => {
   loading.value = true

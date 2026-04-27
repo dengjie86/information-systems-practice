@@ -49,7 +49,7 @@ onMounted(loadUsers)
     </section>
 
     <section class="panel" v-loading="loading">
-      <el-table :data="users" row-key="id">
+      <el-table :data="users" row-key="id" empty-text="暂无用户数据">
         <el-table-column prop="username" label="账号" min-width="120" />
         <el-table-column prop="realName" label="姓名" min-width="120" />
         <el-table-column prop="role" label="角色" width="110">
