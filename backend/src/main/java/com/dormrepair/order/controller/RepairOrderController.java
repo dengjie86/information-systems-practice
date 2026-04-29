@@ -5,6 +5,10 @@ import com.dormrepair.common.result.Result;
 import com.dormrepair.order.dto.AdminOrderAssignRequest;
 import com.dormrepair.order.dto.AdminOrderAuditRequest;
 import com.dormrepair.order.dto.CreateRepairOrderRequest;
+import com.dormrepair.order.dto.WorkerAcceptRequest;
+import com.dormrepair.order.dto.WorkerFinishRequest;
+import com.dormrepair.order.dto.WorkerRecordRequest;
+import com.dormrepair.order.dto.WorkerRejectRequest;
 import com.dormrepair.order.service.RepairOrderService;
 import com.dormrepair.order.vo.AdminRepairOrderDetailVO;
 import com.dormrepair.order.vo.AdminRepairOrderListItemVO;
@@ -77,14 +81,7 @@ public class RepairOrderController {
     }
 
     @PostMapping("/admin/{id}/approve")
-    public Result<Void> approve(@PathVariable Long id) {
-        LoginUser loginUser = LoginUserContext.requireUser();
-        repairOrderService.approveOrder(loginUser.role(), id, null);
-        return Result.success();
-    }
-
-    @PostMapping("/admin/{id}/approve-with-remark")
-    public Result<Void> approveWithRemark(@PathVariable Long id, @Valid @RequestBody AdminOrderAuditRequest request) {
+    public Result<Void> approve(@PathVariable Long id, @Valid @RequestBody AdminOrderAuditRequest request) {
         LoginUser loginUser = LoginUserContext.requireUser();
         repairOrderService.approveOrder(loginUser.role(), id, request);
         return Result.success();
@@ -101,6 +98,34 @@ public class RepairOrderController {
     public Result<Void> assign(@PathVariable Long id, @Valid @RequestBody AdminOrderAssignRequest request) {
         LoginUser loginUser = LoginUserContext.requireUser();
         repairOrderService.assignOrder(loginUser.role(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/accept")
+    public Result<Void> accept(@PathVariable Long id, @Valid @RequestBody(required = false) WorkerAcceptRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.acceptOrder(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/worker-reject")
+    public Result<Void> workerReject(@PathVariable Long id, @Valid @RequestBody WorkerRejectRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.rejectByWorker(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/finish")
+    public Result<Void> finish(@PathVariable Long id, @Valid @RequestBody(required = false) WorkerFinishRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.finishOrder(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/record")
+    public Result<Void> addRecord(@PathVariable Long id, @Valid @RequestBody WorkerRecordRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.addRepairRecord(loginUser.userId(), id, request);
         return Result.success();
     }
 }

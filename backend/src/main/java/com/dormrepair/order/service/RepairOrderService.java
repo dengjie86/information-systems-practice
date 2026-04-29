@@ -12,6 +12,12 @@ import com.dormrepair.common.result.ResultCode;
 import com.dormrepair.order.dto.AdminOrderAssignRequest;
 import com.dormrepair.order.dto.AdminOrderAuditRequest;
 import com.dormrepair.order.dto.CreateRepairOrderRequest;
+import com.dormrepair.order.dto.WorkerAcceptRequest;
+import com.dormrepair.order.dto.WorkerFinishRequest;
+import com.dormrepair.order.dto.WorkerRecordRequest;
+import com.dormrepair.order.dto.WorkerRejectRequest;
+import com.dormrepair.record.entity.RepairRecordEntity;
+import com.dormrepair.record.mapper.RepairRecordMapper;
 import com.dormrepair.order.entity.RepairOrderEntity;
 import com.dormrepair.order.mapper.RepairOrderMapper;
 import com.dormrepair.order.vo.AdminRepairOrderDetailVO;
@@ -19,6 +25,7 @@ import com.dormrepair.order.vo.AdminRepairOrderListItemVO;
 import com.dormrepair.order.vo.CreateRepairOrderResponse;
 import com.dormrepair.order.vo.RepairOrderDetailVO;
 import com.dormrepair.order.vo.RepairOrderListItemVO;
+import com.dormrepair.order.vo.RepairRecordVO;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.mapper.UserMapper;
 import java.util.ArrayList;
@@ -42,15 +49,18 @@ public class RepairOrderService {
     private final RepairOrderMapper repairOrderMapper;
     private final UserMapper userMapper;
     private final RepairCategoryMapper categoryMapper;
+    private final RepairRecordMapper repairRecordMapper;
 
     public RepairOrderService(
         RepairOrderMapper repairOrderMapper,
         UserMapper userMapper,
-        RepairCategoryMapper categoryMapper
+        RepairCategoryMapper categoryMapper,
+        RepairRecordMapper repairRecordMapper
     ) {
         this.repairOrderMapper = repairOrderMapper;
         this.userMapper = userMapper;
         this.categoryMapper = categoryMapper;
+        this.repairRecordMapper = repairRecordMapper;
     }
 
     @Transactional
@@ -142,7 +152,8 @@ public class RepairOrderService {
         }
 
         RepairCategoryEntity category = categoryMapper.selectById(order.getCategoryId());
-        return toDetail(order, category);
+        List<RepairRecordVO> records = loadRepairRecords(orderId);
+        return toDetail(order, category, records);
     }
 
     public PageResult<AdminRepairOrderListItemVO> pageAdminOrders(
@@ -182,7 +193,8 @@ public class RepairOrderService {
 
         RepairCategoryEntity category = categoryMapper.selectById(order.getCategoryId());
         Map<Long, UserEntity> userMap = loadUsers(List.of(order));
-        return toAdminDetail(order, category, userMap);
+        List<RepairRecordVO> records = loadRepairRecords(orderId);
+        return toAdminDetail(order, category, userMap, records);
     }
 
     @Transactional
@@ -225,8 +237,80 @@ public class RepairOrderService {
         order.setAssignedWorkerId(worker.getId());
         order.setAssignTime(LocalDateTime.now());
         order.setStatus(OrderStatuses.PENDING_ACCEPT);
+        order.setRejectReason(null);
         order.setDispatchRemark(request.trimDispatchRemark());
         repairOrderMapper.updateById(order);
+    }
+
+    @Transactional
+    public void acceptOrder(Long loginUserId, Long orderId, WorkerAcceptRequest request) {
+        RepairOrderEntity order = getOrderForWorkerAction(
+            loginUserId, orderId, OrderStatuses.PENDING_ACCEPT, "只有待接单工单才可以接单");
+        order.setStatus(OrderStatuses.PROCESSING);
+        order.setAcceptTime(LocalDateTime.now());
+        repairOrderMapper.updateById(order);
+
+        saveRepairRecord(orderId, loginUserId, "ACCEPT",
+            request == null ? null : request.trimRemark(), null,
+            OrderStatuses.PENDING_ACCEPT, OrderStatuses.PROCESSING);
+    }
+
+    @Transactional
+    public void rejectByWorker(Long loginUserId, Long orderId, WorkerRejectRequest request) {
+        RepairOrderEntity order = getOrderForWorkerAction(
+            loginUserId, orderId, OrderStatuses.PENDING_ACCEPT, "只有待接单工单才可以拒单");
+        String rejectReason = request.trimRejectReason();
+        order.setStatus(OrderStatuses.PENDING_ASSIGN);
+        order.setAssignedWorkerId(null);
+        order.setAssignTime(null);
+        order.setRejectReason(rejectReason);
+        repairOrderMapper.updateById(order);
+
+        saveRepairRecord(orderId, loginUserId, "REJECT",
+            rejectReason, null,
+            OrderStatuses.PENDING_ACCEPT, OrderStatuses.PENDING_ASSIGN);
+    }
+
+    @Transactional
+    public void finishOrder(Long loginUserId, Long orderId, WorkerFinishRequest request) {
+        RepairOrderEntity order = getOrderForWorkerAction(
+            loginUserId, orderId, OrderStatuses.PROCESSING, "只有处理中工单才可以完成维修");
+        order.setStatus(OrderStatuses.PENDING_CONFIRM);
+        order.setFinishTime(LocalDateTime.now());
+        repairOrderMapper.updateById(order);
+
+        String actionDesc = request == null ? null : (request.actionDesc() == null ? null : request.actionDesc().trim());
+        String resultImage = request == null ? null : (request.resultImage() == null ? null : request.resultImage().trim());
+        saveRepairRecord(orderId, loginUserId, "FINISH",
+            actionDesc, resultImage,
+            OrderStatuses.PROCESSING, OrderStatuses.PENDING_CONFIRM);
+    }
+
+    @Transactional
+    public void addRepairRecord(Long loginUserId, Long orderId, WorkerRecordRequest request) {
+        RepairOrderEntity order = getOrderForWorkerAction(
+            loginUserId, orderId, OrderStatuses.PROCESSING, "只有处理中的工单才可以填写维修记录");
+        String actionDesc = request.actionDesc() == null ? null : request.actionDesc().trim();
+        String resultImage = request.resultImage() == null ? null : request.resultImage().trim();
+        saveRepairRecord(orderId, loginUserId, "RECORD",
+            actionDesc, resultImage,
+            OrderStatuses.PROCESSING, OrderStatuses.PROCESSING);
+    }
+
+    private List<RepairRecordVO> loadRepairRecords(Long orderId) {
+        List<RepairRecordEntity> records = repairRecordMapper.selectList(
+            new LambdaQueryWrapper<RepairRecordEntity>()
+                .eq(RepairRecordEntity::getOrderId, orderId)
+                .orderByAsc(RepairRecordEntity::getActionTime)
+                .orderByAsc(RepairRecordEntity::getId)
+        );
+        return records.stream()
+            .map(r -> new RepairRecordVO(
+                r.getId(), r.getOrderId(), r.getWorkerId(),
+                r.getActionType(), r.getActionDesc(), r.getResultImage(),
+                r.getStatusBefore(), r.getStatusAfter(), r.getActionTime()
+            ))
+            .toList();
     }
 
     private Map<Long, RepairCategoryEntity> loadCategories(List<RepairOrderEntity> orders) {
@@ -278,7 +362,7 @@ public class RepairOrderService {
         );
     }
 
-    private RepairOrderDetailVO toDetail(RepairOrderEntity order, RepairCategoryEntity category) {
+    private RepairOrderDetailVO toDetail(RepairOrderEntity order, RepairCategoryEntity category, List<RepairRecordVO> records) {
         return new RepairOrderDetailVO(
             order.getId(),
             order.getOrderNo(),
@@ -298,7 +382,8 @@ public class RepairOrderService {
             order.getAssignTime(),
             order.getAcceptTime(),
             order.getFinishTime(),
-            order.getCloseTime()
+            order.getCloseTime(),
+            records
         );
     }
 
@@ -334,7 +419,8 @@ public class RepairOrderService {
     private AdminRepairOrderDetailVO toAdminDetail(
         RepairOrderEntity order,
         RepairCategoryEntity category,
-        Map<Long, UserEntity> userMap
+        Map<Long, UserEntity> userMap,
+        List<RepairRecordVO> records
     ) {
         UserEntity student = userMap.get(order.getUserId());
         UserEntity worker = userMap.get(order.getAssignedWorkerId());
@@ -362,7 +448,8 @@ public class RepairOrderService {
             order.getAssignTime(),
             order.getAcceptTime(),
             order.getFinishTime(),
-            order.getCloseTime()
+            order.getCloseTime(),
+            records
         );
     }
 
@@ -381,6 +468,36 @@ public class RepairOrderService {
             throw new BusinessException(ResultCode.CONFLICT, message);
         }
         return order;
+    }
+
+    private RepairOrderEntity getOrderForWorkerAction(Long loginUserId, Long orderId, String expectedStatus, String message) {
+        RepairOrderEntity order = repairOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "工单不存在");
+        }
+        if (!Objects.equals(order.getAssignedWorkerId(), loginUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权操作未分配给自己的工单");
+        }
+        if (!expectedStatus.equals(order.getStatus())) {
+            throw new BusinessException(ResultCode.CONFLICT, message);
+        }
+        return order;
+    }
+
+    private void saveRepairRecord(Long orderId, Long workerId, String actionType,
+                                   String actionDesc, String resultImage,
+                                   String statusBefore, String statusAfter) {
+        RepairRecordEntity record = new RepairRecordEntity();
+        record.setOrderId(orderId);
+        record.setWorkerId(workerId);
+        record.setActionType(actionType);
+        record.setActionDesc(actionDesc);
+        record.setResultImage(resultImage);
+        record.setStatusBefore(statusBefore);
+        record.setStatusAfter(statusAfter);
+        record.setActionTime(LocalDateTime.now());
+        record.setCreateTime(LocalDateTime.now());
+        repairRecordMapper.insert(record);
     }
 
     private String generateOrderNo() {

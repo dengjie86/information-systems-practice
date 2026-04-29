@@ -1,6 +1,7 @@
 package com.dormrepair.order.vo;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record RepairOrderDetailVO(
     Long id,
@@ -21,6 +22,7 @@ public record RepairOrderDetailVO(
     LocalDateTime assignTime,
     LocalDateTime acceptTime,
     LocalDateTime finishTime,
-    LocalDateTime closeTime
+    LocalDateTime closeTime,
+    List<RepairRecordVO> records
 ) {
 }
