@@ -14,10 +14,6 @@ public final class LoginUserContext {
         HOLDER.set(loginUser);
     }
 
-    public static LoginUser get() {
-        return HOLDER.get();
-    }
-
     public static LoginUser requireUser() {
         LoginUser loginUser = HOLDER.get();
         if (loginUser == null) {
