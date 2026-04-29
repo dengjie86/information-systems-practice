@@ -116,7 +116,7 @@ public class RepairOrderController {
     }
 
     @PostMapping("/{id}/finish")
-    public Result<Void> finish(@PathVariable Long id, @Valid @RequestBody(required = false) WorkerFinishRequest request) {
+    public Result<Void> finish(@PathVariable Long id, @Valid @RequestBody WorkerFinishRequest request) {
         LoginUser loginUser = LoginUserContext.requireUser();
         repairOrderService.finishOrder(loginUser.userId(), id, request);
         return Result.success();

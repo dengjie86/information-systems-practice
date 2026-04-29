@@ -1,6 +1,7 @@
 package com.dormrepair.order.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.mapper.RepairCategoryMapper;
@@ -201,10 +202,11 @@ public class RepairOrderService {
     public void approveOrder(String role, Long orderId, AdminOrderAuditRequest request) {
         checkAdmin(role);
         RepairOrderEntity order = getOrderForAdminAction(orderId, OrderStatuses.PENDING_AUDIT, "只有待审核工单才可以审核通过");
-        order.setStatus(OrderStatuses.PENDING_ASSIGN);
-        order.setRejectReason(null);
-        order.setAdminRemark(request == null ? null : request.trimAdminRemark());
-        repairOrderMapper.updateById(order);
+        repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .set(RepairOrderEntity::getStatus, OrderStatuses.PENDING_ASSIGN)
+            .set(RepairOrderEntity::getRejectReason, null)
+            .set(RepairOrderEntity::getAdminRemark, request == null ? null : request.trimAdminRemark()));
     }
 
     @Transactional
@@ -217,12 +219,14 @@ public class RepairOrderService {
         } catch (IllegalArgumentException ex) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "驳回原因不能为空");
         }
-        order.setStatus(OrderStatuses.REJECTED);
-        order.setAssignedWorkerId(null);
-        order.setAssignTime(null);
-        order.setRejectReason(rejectReason);
-        order.setAdminRemark(null);
-        repairOrderMapper.updateById(order);
+        repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .set(RepairOrderEntity::getStatus, OrderStatuses.REJECTED)
+            .set(RepairOrderEntity::getAssignedWorkerId, null)
+            .set(RepairOrderEntity::getAssignTime, null)
+            .set(RepairOrderEntity::getRejectReason, rejectReason)
+            .set(RepairOrderEntity::getAdminRemark, null)
+            .set(RepairOrderEntity::getDispatchRemark, null));
     }
 
     @Transactional
@@ -234,12 +238,13 @@ public class RepairOrderService {
             throw new BusinessException(ResultCode.CONFLICT, "维修人员不存在或不可用");
         }
 
-        order.setAssignedWorkerId(worker.getId());
-        order.setAssignTime(LocalDateTime.now());
-        order.setStatus(OrderStatuses.PENDING_ACCEPT);
-        order.setRejectReason(null);
-        order.setDispatchRemark(request.trimDispatchRemark());
-        repairOrderMapper.updateById(order);
+        repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .set(RepairOrderEntity::getAssignedWorkerId, worker.getId())
+            .set(RepairOrderEntity::getAssignTime, LocalDateTime.now())
+            .set(RepairOrderEntity::getStatus, OrderStatuses.PENDING_ACCEPT)
+            .set(RepairOrderEntity::getRejectReason, null)
+            .set(RepairOrderEntity::getDispatchRemark, request.trimDispatchRemark()));
     }
 
     @Transactional
@@ -260,11 +265,12 @@ public class RepairOrderService {
         RepairOrderEntity order = getOrderForWorkerAction(
             loginUserId, orderId, OrderStatuses.PENDING_ACCEPT, "只有待接单工单才可以拒单");
         String rejectReason = request.trimRejectReason();
-        order.setStatus(OrderStatuses.PENDING_ASSIGN);
-        order.setAssignedWorkerId(null);
-        order.setAssignTime(null);
-        order.setRejectReason(rejectReason);
-        repairOrderMapper.updateById(order);
+        repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .set(RepairOrderEntity::getStatus, OrderStatuses.PENDING_ASSIGN)
+            .set(RepairOrderEntity::getAssignedWorkerId, null)
+            .set(RepairOrderEntity::getAssignTime, null)
+            .set(RepairOrderEntity::getRejectReason, rejectReason));
 
         saveRepairRecord(orderId, loginUserId, "REJECT",
             rejectReason, null,
@@ -275,12 +281,20 @@ public class RepairOrderService {
     public void finishOrder(Long loginUserId, Long orderId, WorkerFinishRequest request) {
         RepairOrderEntity order = getOrderForWorkerAction(
             loginUserId, orderId, OrderStatuses.PROCESSING, "只有处理中工单才可以完成维修");
+        String actionDesc;
+        try {
+            if (request == null) {
+                throw new IllegalArgumentException("actionDesc");
+            }
+            actionDesc = request.requireActionDesc();
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "完成说明不能为空");
+        }
         order.setStatus(OrderStatuses.PENDING_CONFIRM);
         order.setFinishTime(LocalDateTime.now());
         repairOrderMapper.updateById(order);
 
-        String actionDesc = request == null ? null : (request.actionDesc() == null ? null : request.actionDesc().trim());
-        String resultImage = request == null ? null : (request.resultImage() == null ? null : request.resultImage().trim());
+        String resultImage = request.resultImage() == null ? null : request.resultImage().trim();
         saveRepairRecord(orderId, loginUserId, "FINISH",
             actionDesc, resultImage,
             OrderStatuses.PROCESSING, OrderStatuses.PENDING_CONFIRM);
@@ -357,7 +371,7 @@ public class RepairOrderService {
             order.getContactPhone(),
             order.getStatus(),
             order.getPriority(),
-            order.getRejectReason(),
+            studentVisibleRejectReason(order),
             order.getSubmitTime()
         );
     }
@@ -376,7 +390,7 @@ public class RepairOrderService {
             order.getContactPhone(),
             order.getStatus(),
             order.getPriority(),
-            order.getRejectReason(),
+            studentVisibleRejectReason(order),
             order.getAdminRemark(),
             order.getSubmitTime(),
             order.getAssignTime(),
@@ -457,6 +471,10 @@ public class RepairOrderService {
         if (!UserRoles.ADMIN.equals(role)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "仅管理员可以执行该操作");
         }
+    }
+
+    private String studentVisibleRejectReason(RepairOrderEntity order) {
+        return OrderStatuses.REJECTED.equals(order.getStatus()) ? order.getRejectReason() : null;
     }
 
     private RepairOrderEntity getOrderForAdminAction(Long orderId, String expectedStatus, String message) {
