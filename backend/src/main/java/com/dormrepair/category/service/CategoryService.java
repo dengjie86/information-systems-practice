@@ -1,6 +1,7 @@
 package com.dormrepair.category.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.dormrepair.category.entity.RepairCategoryEntity;
 import com.dormrepair.category.mapper.RepairCategoryMapper;
 import com.dormrepair.common.exception.BusinessException;
@@ -52,9 +53,12 @@ public class CategoryService {
             throw new BusinessException(ResultCode.NOT_FOUND, "分类不存在");
         }
         assertCategoryNameUnique(entity.getCategoryName(), entity.getId());
-        entity.setCategoryName(entity.getCategoryName().trim());
-        entity.setSortOrder(entity.getSortOrder() == null ? existed.getSortOrder() : entity.getSortOrder());
-        categoryMapper.updateById(entity);
+        categoryMapper.update(null, new LambdaUpdateWrapper<RepairCategoryEntity>()
+            .eq(RepairCategoryEntity::getId, entity.getId())
+            .set(RepairCategoryEntity::getCategoryName, entity.getCategoryName().trim())
+            .set(RepairCategoryEntity::getDescription, entity.getDescription())
+            .set(RepairCategoryEntity::getSortOrder, entity.getSortOrder() == null ? existed.getSortOrder() : entity.getSortOrder())
+        );
     }
 
     public void updateStatus(Long id, Integer status) {

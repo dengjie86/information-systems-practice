@@ -77,7 +77,14 @@ public class RepairOrderController {
     }
 
     @PostMapping("/admin/{id}/approve")
-    public Result<Void> approve(@PathVariable Long id, @Valid @RequestBody(required = false) AdminOrderAuditRequest request) {
+    public Result<Void> approve(@PathVariable Long id) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.approveOrder(loginUser.role(), id, null);
+        return Result.success();
+    }
+
+    @PostMapping("/admin/{id}/approve-with-remark")
+    public Result<Void> approveWithRemark(@PathVariable Long id, @Valid @RequestBody AdminOrderAuditRequest request) {
         LoginUser loginUser = LoginUserContext.requireUser();
         repairOrderService.approveOrder(loginUser.role(), id, request);
         return Result.success();

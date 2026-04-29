@@ -22,6 +22,7 @@ import com.dormrepair.order.vo.RepairOrderListItemVO;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.mapper.UserMapper;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -97,17 +98,24 @@ public class RepairOrderService {
     }
 
     public PageResult<RepairOrderListItemVO> pageMyOrders(Long loginUserId, String role, long pageNum, long pageSize, String status) {
-        if (!UserRoles.STUDENT.equals(role)) {
-            throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以查看自己的工单");
+        if (!UserRoles.STUDENT.equals(role) && !UserRoles.WORKER.equals(role)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "仅学生和维修人员可以查看自己的工单");
+        }
+
+        LambdaQueryWrapper<RepairOrderEntity> queryWrapper = new LambdaQueryWrapper<RepairOrderEntity>()
+            .eq(StringUtils.hasText(status), RepairOrderEntity::getStatus, status)
+            .orderByDesc(RepairOrderEntity::getSubmitTime)
+            .orderByDesc(RepairOrderEntity::getId);
+
+        if (UserRoles.STUDENT.equals(role)) {
+            queryWrapper.eq(RepairOrderEntity::getUserId, loginUserId);
+        } else {
+            queryWrapper.eq(RepairOrderEntity::getAssignedWorkerId, loginUserId);
         }
 
         Page<RepairOrderEntity> page = repairOrderMapper.selectPage(
             new Page<>(pageNum, pageSize),
-            new LambdaQueryWrapper<RepairOrderEntity>()
-                .eq(RepairOrderEntity::getUserId, loginUserId)
-                .eq(StringUtils.hasText(status), RepairOrderEntity::getStatus, status)
-                .orderByDesc(RepairOrderEntity::getSubmitTime)
-                .orderByDesc(RepairOrderEntity::getId)
+            queryWrapper
         );
 
         Map<Long, RepairCategoryEntity> categoryMap = loadCategories(page.getRecords());
@@ -118,16 +126,19 @@ public class RepairOrderService {
     }
 
     public RepairOrderDetailVO getMyOrderDetail(Long loginUserId, String role, Long orderId) {
-        if (!UserRoles.STUDENT.equals(role)) {
-            throw new BusinessException(ResultCode.FORBIDDEN, "仅学生可以查看自己的工单");
+        if (!UserRoles.STUDENT.equals(role) && !UserRoles.WORKER.equals(role)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "仅学生和维修人员可以查看自己的工单");
         }
 
         RepairOrderEntity order = repairOrderMapper.selectById(orderId);
         if (order == null) {
             throw new BusinessException(ResultCode.NOT_FOUND, "工单不存在");
         }
-        if (!Objects.equals(order.getUserId(), loginUserId)) {
+        if (UserRoles.STUDENT.equals(role) && !Objects.equals(order.getUserId(), loginUserId)) {
             throw new BusinessException(ResultCode.FORBIDDEN, "无权查看其他学生的工单");
+        }
+        if (UserRoles.WORKER.equals(role) && !Objects.equals(order.getAssignedWorkerId(), loginUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权查看未分配给自己的工单");
         }
 
         RepairCategoryEntity category = categoryMapper.selectById(order.getCategoryId());
@@ -373,6 +384,7 @@ public class RepairOrderService {
     }
 
     private String generateOrderNo() {
-        return "WO" + LocalDateTime.now().format(ORDER_NO_FORMATTER) + String.format("%04d", (int) (Math.random() * 10000));
+        return "WO" + LocalDateTime.now().format(ORDER_NO_FORMATTER)
+            + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
     }
 }

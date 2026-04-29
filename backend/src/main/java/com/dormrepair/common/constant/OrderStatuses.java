@@ -5,7 +5,11 @@ public final class OrderStatuses {
     public static final String PENDING_AUDIT = "PENDING_AUDIT";
     public static final String PENDING_ASSIGN = "PENDING_ASSIGN";
     public static final String PENDING_ACCEPT = "PENDING_ACCEPT";
+    public static final String PROCESSING = "PROCESSING";
+    public static final String PENDING_CONFIRM = "PENDING_CONFIRM";
+    public static final String COMPLETED = "COMPLETED";
     public static final String REJECTED = "REJECTED";
+    public static final String CLOSED = "CLOSED";
 
     private OrderStatuses() {
     }
