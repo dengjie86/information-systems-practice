@@ -123,7 +123,11 @@ async function moveCategory(row: RepairCategory, direction: -1 | 1) {
 async function toggleStatus(row: RepairCategory) {
   const nextStatus = row.status === 1 ? 0 : 1
   await updateCategoryStatus(row.id, nextStatus)
-  ElMessage.success(nextStatus === 1 ? '分类已启用' : '分类已停用')
+  if (nextStatus === 1) {
+    ElMessage.success('分类已启用')
+  } else {
+    ElMessage.error('分类已停用')
+  }
   await loadCategories()
 }
 
@@ -144,7 +148,7 @@ async function deleteCurrentCategory() {
   deleting.value = true
   try {
     await deleteCategory(form.id)
-    ElMessage.success('分类已删除')
+    ElMessage.error('分类已删除')
     dialogOpen.value = false
     await loadCategories()
   } finally {
@@ -355,7 +359,7 @@ onMounted(loadCategories)
   gap: 8px;
 }
 
-:deep(.el-button--primary) {
+:deep(.el-button--primary:not(.is-disabled)) {
   background: var(--text);
   border-color: var(--text);
 }

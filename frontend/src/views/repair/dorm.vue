@@ -112,7 +112,7 @@ const onSave = async () => {
   gap: 16px;
 }
 
-:deep(.el-button--primary) {
+:deep(.el-button--primary:not(.is-disabled)) {
   background: var(--text);
   border-color: var(--text);
 }

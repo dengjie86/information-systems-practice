@@ -57,6 +57,11 @@ export interface CategoryParams {
 export const getAdminOrders = (params: AdminOrderQuery) =>
   request.get<any, PageResult<AdminOrder>>('/orders/admin', { params })
 
+export const getAdminOrderCount = async (status: OrderStatus) => {
+  const res = await getAdminOrders({ pageNum: 1, pageSize: 1, status })
+  return res.total
+}
+
 export const getAdminOrderDetail = (id: number | string) =>
   request.get<any, AdminOrder>(`/orders/admin/${id}`)
 

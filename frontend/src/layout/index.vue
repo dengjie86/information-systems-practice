@@ -60,9 +60,9 @@
       </el-header>
 
       <el-main class="main">
-        <router-view v-slot="{ Component }">
+        <router-view v-slot="{ Component, route: viewRoute }">
           <transition name="fade-slide" mode="out-in">
-            <component :is="Component" />
+            <component :is="Component" :key="viewRoute.path" />
           </transition>
         </router-view>
       </el-main>
@@ -116,9 +116,12 @@ const menus = computed(() =>
   menusByRole[userStore.role as Role] ?? menusByRole.ADMIN
 )
 
-const currentTitle = computed(
-  () => menus.value.find(m => m.path === route.path)?.title ?? '首页'
-)
+const currentTitle = computed(() => {
+  const title = route.meta.title
+  return typeof title === 'string'
+    ? title
+    : menus.value.find(m => m.path === route.path)?.title ?? '首页'
+})
 
 const roleLabel: Record<Role, string> = {
   STUDENT: '学生',

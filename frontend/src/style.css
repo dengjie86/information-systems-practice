@@ -78,11 +78,11 @@ body {
   font-size: 13px;
   font-weight: 500;
 }
-.app-confirm-dialog .el-message-box__btns .el-button--primary {
+.app-confirm-dialog .el-message-box__btns .el-button--primary:not(.is-disabled) {
   background: var(--text);
   border-color: var(--text);
 }
-.app-confirm-dialog .el-message-box__btns .el-button--primary:hover {
+.app-confirm-dialog .el-message-box__btns .el-button--primary:not(.is-disabled):hover {
   background: #27272a;
   border-color: #27272a;
 }
@@ -124,9 +124,9 @@ body {
   font-weight: 400;
 }
 .status-pending-audit.el-tag {
-  color: #e6a23c !important;
-  background: #fdf6ec !important;
-  border-color: #faecd8 !important;
+  color: #b45309 !important;
+  background: #fff7ed !important;
+  border-color: #fed7aa !important;
 }
 .status-pending-assign.el-tag {
   color: #8b5cf6 !important;
@@ -134,19 +134,19 @@ body {
   border-color: #ddd6fe !important;
 }
 .status-pending-accept.el-tag {
-  color: #409eff !important;
-  background: #ecf5ff !important;
-  border-color: #d9ecff !important;
+  color: #2563eb !important;
+  background: #eff6ff !important;
+  border-color: #bfdbfe !important;
 }
 .status-processing.el-tag {
-  color: #409eff !important;
-  background: #ecf5ff !important;
-  border-color: #d9ecff !important;
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+  border-color: #99f6e4 !important;
 }
 .status-pending-confirm.el-tag {
-  color: #e6a23c !important;
-  background: #fdf6ec !important;
-  border-color: #faecd8 !important;
+  color: #be185d !important;
+  background: #fdf2f8 !important;
+  border-color: #fbcfe8 !important;
 }
 .status-completed.el-tag {
   color: #67c23a !important;
@@ -162,6 +162,20 @@ body {
   color: #909399 !important;
   background: #f4f4f5 !important;
   border-color: #e9e9eb !important;
+}
+
+.table-action-column .cell {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
+}
+
+.table-detail-action.el-button {
+  margin: 0;
+  padding: 4px 8px;
+  min-width: 64px;
 }
 
 ::-webkit-scrollbar {

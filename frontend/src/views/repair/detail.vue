@@ -42,12 +42,12 @@
 
         <div v-if="detail.imageUrl" class="image-line">
           <span>故障图片</span>
-          <el-link :href="detail.imageUrl" target="_blank" :underline="false">{{ detail.imageUrl }}</el-link>
+          <el-link :href="detail.imageUrl" target="_blank" underline="never">{{ detail.imageUrl }}</el-link>
         </div>
 
-        <div v-if="detail.rejectReason || detail.adminRemark" class="notice">
-          <b>{{ detail.rejectReason ? '驳回原因' : '管理员备注' }}</b>
-          <p>{{ detail.rejectReason || detail.adminRemark }}</p>
+        <div v-if="visibleRejectReason || detail.adminRemark" class="notice">
+          <b>{{ visibleRejectReason ? '驳回原因' : '管理员备注' }}</b>
+          <p>{{ visibleRejectReason || detail.adminRemark }}</p>
         </div>
       </section>
 
@@ -81,6 +81,10 @@ const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const detail = ref<RepairOrder>()
+
+const visibleRejectReason = computed(() =>
+  detail.value?.status === 'REJECTED' ? detail.value.rejectReason : undefined
+)
 
 const timeline = computed(() => {
   const item = detail.value

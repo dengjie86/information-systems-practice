@@ -3,46 +3,33 @@ import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Refresh, View } from '@element-plus/icons-vue'
 import {
-  approveOrder,
-  assignOrder,
-  getAdminOrderCount,
-  getAdminOrderDetail,
-  getAdminOrders,
-  getWorkers,
-  rejectOrder,
-  type AdminOrder,
-  type AssignParams,
-  type AuditParams,
-} from '@/api/admin'
-import type { OrderStatus } from '@/api/repair'
-import type { Priority } from '@/api/repair'
-import type { UserInfo } from '@/stores/user'
+  acceptOrder,
+  finishRepairOrder,
+  getMyOrderCount,
+  getMyOrders,
+  getOrderDetail,
+  rejectWorkerOrder,
+  type OrderStatus,
+  type Priority,
+  type RepairOrder,
+} from '@/api/repair'
 import { formatTime, priorityMap, statusClass, statusMap } from '@/views/repair/meta'
+
+type WorkerAction = 'accept' | 'reject' | 'finish'
 
 const loading = shallowRef(false)
 const detailLoading = shallowRef(false)
 const submitting = shallowRef(false)
 const drawerOpen = shallowRef(false)
 const actionDialogOpen = shallowRef(false)
-const actionMode = shallowRef<'approve' | 'reject' | 'assign'>('approve')
-const actionTitle = computed(() => ({
-  approve: '审核通过',
-  reject: '驳回工单',
-  assign: '分派维修人员',
-})[actionMode.value])
+const actionMode = shallowRef<WorkerAction>('accept')
 
-const remarkLabel = computed(() => ({
-  approve: '审核备注（学生可见）',
-  reject: '',
-  assign: '派单备注（仅管理端/维修端可见）',
-})[actionMode.value])
-
-const orders = ref<AdminOrder[]>([])
-const workers = ref<UserInfo[]>([])
-const current = ref<AdminOrder | null>(null)
+const orders = ref<RepairOrder[]>([])
+const current = ref<RepairOrder | null>(null)
 const total = shallowRef(0)
-const pendingAuditCount = shallowRef(0)
-const pendingAssignCount = shallowRef(0)
+const pendingAcceptCount = shallowRef(0)
+const processingCount = shallowRef(0)
+const waitingConfirmCount = shallowRef(0)
 const actionFormRef = ref<FormInstance>()
 
 const query = reactive({
@@ -51,58 +38,51 @@ const query = reactive({
   status: '' as OrderStatus | '',
 })
 
-const actionForm = reactive<AuditParams & AssignParams>({
-  adminRemark: '',
+const actionForm = reactive({
+  remark: '',
   rejectReason: '',
-  workerId: null,
+  actionDesc: '',
 })
 
 const statusFilters = [
   { label: '全部', value: '' },
-  { label: '待审核', value: 'PENDING_AUDIT' },
-  { label: '待分派', value: 'PENDING_ASSIGN' },
   { label: '待接单', value: 'PENDING_ACCEPT' },
   { label: '处理中', value: 'PROCESSING' },
   { label: '待确认', value: 'PENDING_CONFIRM' },
   { label: '已完成', value: 'COMPLETED' },
-  { label: '已驳回', value: 'REJECTED' },
 ]
+
+const actionTitle = computed(() => ({
+  accept: '接单',
+  reject: '拒单',
+  finish: '完成维修',
+})[actionMode.value])
 
 const actionRules = computed<FormRules>(() => ({
   rejectReason: actionMode.value === 'reject'
-    ? [{ required: true, message: '请填写驳回原因', trigger: 'blur' }]
+    ? [{ required: true, message: '请填写拒单原因', trigger: 'blur' }]
     : [],
-  workerId: actionMode.value === 'assign'
-    ? [{ required: true, message: '请选择维修人员', trigger: 'change' }]
+  actionDesc: actionMode.value === 'finish'
+    ? [{ required: true, message: '请填写完成说明', trigger: 'blur' }]
     : [],
 }))
-
-const activeCount = computed(() =>
-  orders.value.filter(item => !['COMPLETED', 'CLOSED', 'REJECTED'].includes(item.status)).length
-)
 
 const selectedStatusLabel = computed(() =>
   statusFilters.find(item => item.value === query.status)?.label ?? '该状态'
 )
 
 const tableEmptyText = computed(() =>
-  query.status ? `暂无${selectedStatusLabel.value}工单` : '暂无工单数据'
+  query.status ? `暂无${selectedStatusLabel.value}工单` : '暂无分派给你的工单'
 )
 
-const visibleRejectReason = computed(() => {
-  const order = current.value
-  if (!order?.rejectReason) return ''
-  return ['REJECTED', 'PENDING_ASSIGN'].includes(order.status) ? order.rejectReason : ''
+const timelineRecords = computed(() => {
+  return current.value?.records ?? []
 })
-
-const rejectReasonTitle = computed(() =>
-  current.value?.status === 'PENDING_ASSIGN' ? '拒单原因' : '驳回原因'
-)
 
 async function loadOrders() {
   loading.value = true
   try {
-    const res = await getAdminOrders(query)
+    const res = await getMyOrders(query)
     orders.value = res.records
     total.value = res.total
   } finally {
@@ -111,37 +91,42 @@ async function loadOrders() {
 }
 
 async function loadSummaryCounts() {
-  const [pendingAudit, pendingAssign] = await Promise.all([
-    getAdminOrderCount('PENDING_AUDIT'),
-    getAdminOrderCount('PENDING_ASSIGN'),
+  const [pendingAccept, processing, waitingConfirm] = await Promise.all([
+    getMyOrderCount('PENDING_ACCEPT'),
+    getMyOrderCount('PROCESSING'),
+    getMyOrderCount('PENDING_CONFIRM'),
   ])
-  pendingAuditCount.value = pendingAudit
-  pendingAssignCount.value = pendingAssign
+  pendingAcceptCount.value = pendingAccept
+  processingCount.value = processing
+  waitingConfirmCount.value = waitingConfirm
 }
 
-async function loadWorkers() {
-  workers.value = await getWorkers()
+async function refreshCurrent() {
+  if (!current.value) return
+  current.value = await getOrderDetail(current.value.id)
 }
 
-async function openDetail(row: AdminOrder) {
+async function openDetail(row: RepairOrder) {
   drawerOpen.value = true
   detailLoading.value = true
   try {
-    current.value = await getAdminOrderDetail(row.id)
+    current.value = await getOrderDetail(row.id)
   } finally {
     detailLoading.value = false
   }
 }
 
 function resetActionForm() {
-  actionForm.adminRemark = ''
+  actionForm.remark = ''
   actionForm.rejectReason = ''
-  actionForm.workerId = null
+  actionForm.actionDesc = ''
   actionFormRef.value?.clearValidate()
 }
 
-function openAction(mode: 'approve' | 'reject' | 'assign', row?: AdminOrder) {
-  current.value = row ?? current.value
+async function openAction(mode: WorkerAction, row?: RepairOrder) {
+  if (row) {
+    current.value = await getOrderDetail(row.id)
+  }
   if (!current.value) return
   actionMode.value = mode
   resetActionForm()
@@ -155,38 +140,44 @@ async function submitAction() {
 
   submitting.value = true
   try {
-    if (actionMode.value === 'approve') {
-      await approveOrder(current.value.id, { adminRemark: actionForm.adminRemark })
-      ElMessage.success('工单已审核通过')
+    const mode = actionMode.value
+    if (actionMode.value === 'accept') {
+      await acceptOrder(current.value.id, optionalText(actionForm.remark))
+      ElMessage.success('已接单，工单进入处理中')
     } else if (actionMode.value === 'reject') {
-      await rejectOrder(current.value.id, {
-        rejectReason: actionForm.rejectReason,
-      })
-      ElMessage.success('工单已驳回')
+      await rejectWorkerOrder(current.value.id, actionForm.rejectReason)
+      ElMessage.success('已拒单，工单退回待分派')
     } else {
-      await assignOrder(current.value.id, {
-        workerId: actionForm.workerId,
-        dispatchRemark: actionForm.adminRemark,
+      await finishRepairOrder(current.value.id, {
+        actionDesc: actionForm.actionDesc,
       })
-      ElMessage.success('工单已分派')
+      ElMessage.success('已提交完成，等待学生确认')
     }
     actionDialogOpen.value = false
     await loadSummaryCounts()
     await loadOrders()
-    if (drawerOpen.value) {
-      await openDetail(current.value)
+    if (mode === 'reject') {
+      drawerOpen.value = false
+      current.value = null
+    } else if (drawerOpen.value) {
+      await refreshCurrent()
     }
   } finally {
     submitting.value = false
   }
 }
 
-function canApprove(row: AdminOrder) {
-  return row.status === 'PENDING_AUDIT'
+function optionalText(value: string) {
+  const text = value.trim()
+  return text || undefined
 }
 
-function canAssign(row: AdminOrder) {
-  return row.status === 'PENDING_ASSIGN'
+function canAccept(row: RepairOrder) {
+  return row.status === 'PENDING_ACCEPT'
+}
+
+function canWork(row: RepairOrder) {
+  return row.status === 'PROCESSING'
 }
 
 function statusLabel(status: OrderStatus) {
@@ -199,6 +190,14 @@ function statusType(status: OrderStatus) {
 
 function priorityLabel(priority: Priority) {
   return priorityMap[priority] ?? priority
+}
+
+function actionLabel(actionType: string) {
+  return {
+    ACCEPT: '接单',
+    REJECT: '拒单',
+    FINISH: '完成维修',
+  }[actionType] ?? actionType
 }
 
 function onFilter() {
@@ -214,7 +213,6 @@ function onRefresh() {
 onMounted(() => {
   loadOrders()
   loadSummaryCounts()
-  loadWorkers()
 })
 </script>
 
@@ -222,25 +220,25 @@ onMounted(() => {
   <div class="page">
     <section class="page-head">
       <div>
-        <div class="crumb">Order Admin</div>
-        <h1>工单管理</h1>
-        <p>审核学生报修，分派维修人员，并跟踪当前处理状态。</p>
+        <div class="crumb">Worker Orders</div>
+        <h1>维修工单</h1>
+        <p>处理分派给你的宿舍报修，接单后提交完成结果。</p>
       </div>
       <el-button :icon="Refresh" @click="onRefresh">刷新</el-button>
     </section>
 
     <section class="summary">
       <div class="summary-item">
-        <span>待审核</span>
-        <b>{{ pendingAuditCount }}</b>
+        <span>待接单</span>
+        <b>{{ pendingAcceptCount }}</b>
       </div>
       <div class="summary-item">
-        <span>待分派</span>
-        <b>{{ pendingAssignCount }}</b>
+        <span>处理中</span>
+        <b>{{ processingCount }}</b>
       </div>
       <div class="summary-item">
-        <span>本页未完结</span>
-        <b>{{ activeCount }}</b>
+        <span>待学生确认</span>
+        <b>{{ waitingConfirmCount }}</b>
       </div>
     </section>
 
@@ -251,7 +249,7 @@ onMounted(() => {
     <section class="panel" v-loading="loading">
       <el-table :data="orders" row-key="id" class="table" :empty-text="tableEmptyText" @row-dblclick="openDetail">
         <el-table-column prop="orderNo" label="工单号" min-width="150" />
-        <el-table-column prop="title" label="报修内容" min-width="180">
+        <el-table-column prop="title" label="报修内容" min-width="190">
           <template #default="{ row }">
             <div class="title-cell">
               <b>{{ row.title }}</b>
@@ -259,7 +257,6 @@ onMounted(() => {
             </div>
           </template>
         </el-table-column>
-        <el-table-column prop="studentName" label="学生" width="110" align="center" header-align="center" />
         <el-table-column prop="status" label="状态" width="110" align="center" header-align="center">
           <template #default="{ row }">
             <el-tag :type="statusType(row.status)" :class="statusClass(row.status)" effect="light">
@@ -272,8 +269,8 @@ onMounted(() => {
             <span class="priority" :class="row.priority">{{ priorityLabel(row.priority) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="assignedWorkerName" label="维修人员" width="120" align="center" header-align="center">
-          <template #default="{ row }">{{ row.assignedWorkerName || '-' }}</template>
+        <el-table-column prop="contactPhone" label="联系电话" width="130" align="center" header-align="center">
+          <template #default="{ row }">{{ row.contactPhone || '-' }}</template>
         </el-table-column>
         <el-table-column prop="submitTime" label="提交时间" width="150" align="center" header-align="center">
           <template #default="{ row }">{{ formatTime(row.submitTime) }}</template>
@@ -296,7 +293,7 @@ onMounted(() => {
       </footer>
     </section>
 
-    <el-drawer v-model="drawerOpen" title="工单详情" size="520px">
+    <el-drawer v-model="drawerOpen" title="维修工单详情" size="540px">
       <div v-loading="detailLoading" class="detail">
         <template v-if="current">
           <div class="detail-head">
@@ -308,59 +305,72 @@ onMounted(() => {
               {{ statusLabel(current.status) }}
             </el-tag>
           </div>
+
           <dl class="detail-list">
-            <div><dt>学生</dt><dd>{{ current.studentName || '-' }}</dd></div>
             <div><dt>宿舍</dt><dd>{{ current.dormBuilding }} {{ current.dormRoom }}</dd></div>
             <div><dt>联系电话</dt><dd>{{ current.contactPhone || '-' }}</dd></div>
             <div><dt>故障分类</dt><dd>{{ current.categoryName || '-' }}</dd></div>
             <div><dt>优先级</dt><dd>{{ priorityLabel(current.priority) }}</dd></div>
-            <div><dt>维修人员</dt><dd>{{ current.assignedWorkerName || '-' }}</dd></div>
             <div><dt>提交时间</dt><dd>{{ formatTime(current.submitTime) }}</dd></div>
-            <div><dt>分派时间</dt><dd>{{ formatTime(current.assignTime) }}</dd></div>
+            <div><dt>接单时间</dt><dd>{{ formatTime(current.acceptTime) }}</dd></div>
           </dl>
+
           <section class="desc">
             <h3>问题描述</h3>
             <p>{{ current.description || '学生未填写详细描述。' }}</p>
           </section>
-          <section v-if="visibleRejectReason" class="desc note danger">
-            <h3>{{ rejectReasonTitle }}</h3>
-            <p>{{ visibleRejectReason }}</p>
-          </section>
-          <section v-if="current.adminRemark" class="desc note">
-            <h3>审核备注</h3>
-            <p>{{ current.adminRemark }}</p>
-          </section>
+
           <section v-if="current.dispatchRemark" class="desc note private">
             <h3>派单备注</h3>
             <p>{{ current.dispatchRemark }}</p>
           </section>
+
+          <section v-if="current.imageUrl" class="desc image-link">
+            <h3>故障图片</h3>
+            <el-link :href="current.imageUrl" target="_blank" underline="never">{{ current.imageUrl }}</el-link>
+          </section>
+
+          <section class="records">
+            <h3>处理记录</h3>
+            <el-empty v-if="!timelineRecords.length" description="暂无处理记录" />
+            <el-timeline v-else>
+              <el-timeline-item
+                v-for="record in timelineRecords"
+                :key="record.id"
+                :timestamp="formatTime(record.actionTime)"
+                type="primary"
+              >
+                <div class="record-title">{{ actionLabel(record.actionType) }}</div>
+                <p v-if="record.actionDesc">{{ record.actionDesc }}</p>
+                <el-link v-if="record.resultImage" :href="record.resultImage" target="_blank" underline="never">
+                  {{ record.resultImage }}
+                </el-link>
+              </el-timeline-item>
+            </el-timeline>
+          </section>
+
           <div class="drawer-actions">
-            <el-button :disabled="!canApprove(current)" @click="openAction('approve')">审核通过</el-button>
-            <el-button :disabled="!canApprove(current)" @click="openAction('reject')">驳回工单</el-button>
-            <el-button type="primary" :disabled="!canAssign(current)" @click="openAction('assign')">分派维修</el-button>
+            <el-button :disabled="!canAccept(current)" @click="openAction('reject')">拒单</el-button>
+            <el-button :disabled="!canAccept(current)" @click="openAction('accept')">接单</el-button>
+            <el-button :disabled="!canWork(current)" @click="openAction('finish')">完成维修</el-button>
           </div>
         </template>
       </div>
     </el-drawer>
 
-    <el-dialog v-model="actionDialogOpen" :title="actionTitle" width="440px" @closed="resetActionForm">
+    <el-dialog v-model="actionDialogOpen" :title="actionTitle" width="460px" @closed="resetActionForm">
       <el-form ref="actionFormRef" :model="actionForm" :rules="actionRules" label-position="top">
-        <el-form-item v-if="actionMode === 'assign'" label="维修人员" prop="workerId">
-          <el-select v-model="actionForm.workerId" placeholder="选择维修人员" filterable>
-            <el-option
-              v-for="worker in workers"
-              :key="worker.id"
-              :label="`${worker.realName || worker.username} ${worker.phone || ''}`"
-              :value="worker.id"
-            />
-          </el-select>
+        <el-form-item v-if="actionMode === 'accept'" label="接单备注" prop="remark">
+          <el-input v-model.trim="actionForm.remark" type="textarea" :rows="3" maxlength="255" show-word-limit />
         </el-form-item>
-        <el-form-item v-if="actionMode === 'reject'" label="驳回原因" prop="rejectReason">
+        <el-form-item v-if="actionMode === 'reject'" label="拒单原因" prop="rejectReason">
           <el-input v-model.trim="actionForm.rejectReason" type="textarea" :rows="3" maxlength="255" show-word-limit />
         </el-form-item>
-        <el-form-item v-if="actionMode !== 'reject'" :label="remarkLabel" prop="adminRemark">
-          <el-input v-model.trim="actionForm.adminRemark" type="textarea" :rows="3" maxlength="255" show-word-limit />
-        </el-form-item>
+        <template v-if="actionMode === 'finish'">
+          <el-form-item label="完成说明" prop="actionDesc">
+            <el-input v-model.trim="actionForm.actionDesc" type="textarea" :rows="4" maxlength="2000" show-word-limit />
+          </el-form-item>
+        </template>
       </el-form>
       <template #footer>
         <el-button @click="actionDialogOpen = false">取消</el-button>
@@ -493,7 +503,7 @@ onMounted(() => {
 }
 
 .detail {
-  min-height: 240px;
+  min-height: 260px;
 }
 
 .detail-head {
@@ -542,23 +552,12 @@ onMounted(() => {
   }
 }
 
-.desc {
+.desc,
+.records {
   padding: 14px;
   border: 1px solid var(--border-soft);
   border-radius: 10px;
   margin-bottom: 12px;
-
-  &.note {
-    background: var(--warning-soft);
-  }
-
-  &.danger {
-    background: var(--danger-soft);
-  }
-
-  &.private {
-    background: var(--bg-muted);
-  }
 
   h3 {
     margin: 0 0 8px;
@@ -569,14 +568,53 @@ onMounted(() => {
     margin: 0;
     color: var(--text-muted);
     line-height: 1.7;
+    white-space: pre-wrap;
   }
+}
+
+.image-link {
+  background: var(--bg-subtle);
+}
+
+.note.private {
+  background: var(--bg-muted);
+}
+
+.record-title {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .drawer-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 8px;
+
+  :deep(.el-button) {
+    background: var(--text);
+    border-color: var(--text);
+    color: #fff;
+  }
+
+  :deep(.el-button:not(.is-disabled):hover),
+  :deep(.el-button:not(.is-disabled):focus) {
+    background: #27272a;
+    border-color: #27272a;
+    color: #fff;
+  }
+
+  :deep(.el-button.is-disabled),
+  :deep(.el-button.is-disabled:hover),
+  :deep(.el-button.is-disabled:focus) {
+    background: #f4f4f5;
+    border-color: #dcdfe6;
+    color: #a8abb2;
+    opacity: 1;
+  }
 }
 
 :deep(.el-button--primary:not(.is-disabled)) {

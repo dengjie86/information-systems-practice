@@ -55,7 +55,7 @@
             <h3>待办提醒</h3>
             <p>今天需要你处理的 4 项</p>
           </div>
-          <el-link :underline="false" class="link-more">查看全部 →</el-link>
+          <el-link underline="never" class="link-more">查看全部 →</el-link>
         </header>
         <ul class="todo-list">
           <li v-for="t in todos" :key="t.id">
@@ -294,7 +294,7 @@ const todos = [
   font-weight: 500;
   border-radius: 8px;
 }
-:deep(.el-button--primary) {
+:deep(.el-button--primary:not(.is-disabled)) {
   background: var(--text);
   border-color: var(--text);
   &:hover, &:focus {
