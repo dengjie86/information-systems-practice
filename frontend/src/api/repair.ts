@@ -35,11 +35,25 @@ export interface RepairOrder {
   priority: Priority
   rejectReason?: string
   adminRemark?: string
+  dispatchRemark?: string
   submitTime?: string
   assignTime?: string
   acceptTime?: string
   finishTime?: string
   closeTime?: string
+  records?: RepairRecord[]
+}
+
+export interface RepairRecord {
+  id: number
+  orderId: number
+  workerId: number
+  actionType: 'ACCEPT' | 'REJECT' | 'FINISH'
+  actionDesc?: string
+  resultImage?: string
+  statusBefore?: OrderStatus
+  statusAfter?: OrderStatus
+  actionTime?: string
 }
 
 export interface PageResult<T> {
@@ -79,5 +93,19 @@ export const createOrder = (data: CreateOrderParams) =>
 export const getMyOrders = (params: OrderQuery) =>
   request.get<any, PageResult<RepairOrder>>('/orders/my', { params })
 
+export const getMyOrderCount = async (status: OrderStatus) => {
+  const res = await getMyOrders({ pageNum: 1, pageSize: 1, status })
+  return res.total
+}
+
 export const getOrderDetail = (id: number | string) =>
   request.get<any, RepairOrder>(`/orders/${id}`)
+
+export const acceptOrder = (id: number | string, remark?: string) =>
+  request.post<any, null>(`/orders/${id}/accept`, { remark })
+
+export const rejectWorkerOrder = (id: number | string, rejectReason: string) =>
+  request.post<any, null>(`/orders/${id}/worker-reject`, { rejectReason })
+
+export const finishRepairOrder = (id: number | string, data: { actionDesc: string }) =>
+  request.post<any, null>(`/orders/${id}/finish`, data)

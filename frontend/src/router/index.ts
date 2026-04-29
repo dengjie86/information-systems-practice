@@ -23,8 +23,6 @@ const router = createRouter({
           component: () => import('@/views/home/index.vue'),
           meta: { title: '工作台' },
         },
-
-        // ---- 学生端 ----
         {
           path: 'repair/dorm',
           name: 'RepairDorm',
@@ -49,8 +47,6 @@ const router = createRouter({
           component: () => import('@/views/repair/detail.vue'),
           meta: { title: '工单详情', roles: ['STUDENT'] as Role[] },
         },
-
-        // ---- 管理端 ----
         {
           path: 'order/list',
           name: 'OrderList',
@@ -75,12 +71,10 @@ const router = createRouter({
           component: Placeholder,
           meta: { title: '统计分析', roles: ['ADMIN'] as Role[] },
         },
-
-        // ---- 维修端 ----
         {
           path: 'work/list',
           name: 'WorkList',
-          component: Placeholder,
+          component: () => import('@/views/work/list.vue'),
           meta: { title: '我的工单', roles: ['WORKER'] as Role[] },
         },
       ],
@@ -89,29 +83,26 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to) => {
   const token = localStorage.getItem('token')
-  // 公开页面直通
   if (to.meta.public) {
-    // 已登录访问登录页，跳工作台
-    return token ? next('/home') : next()
+    return token ? '/home' : true
   }
-  if (!token) return next('/login')
+  if (!token) return '/login'
 
-  // 角色权限校验
   const roles = to.meta.roles as Role[] | undefined
   if (roles?.length) {
     const userStore = useUserStore()
     const role = userStore.role
     if (!role) {
       userStore.logout()
-      return next('/login')
+      return '/login'
     }
     if (!roles.includes(role)) {
-      return next('/home')
+      return '/home'
     }
   }
-  next()
+  return true
 })
 
 export default router

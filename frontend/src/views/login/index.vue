@@ -58,7 +58,7 @@
 
           <div class="extra">
             <el-checkbox v-model="remember">7 天内免登录</el-checkbox>
-            <el-link :underline="false" class="link">忘记密码？</el-link>
+            <el-link underline="never" class="link">忘记密码？</el-link>
           </div>
 
           <el-button type="primary" :loading="loading" class="btn-primary" @click="handleLogin">
@@ -69,8 +69,8 @@
         <footer>
           <span>© {{ year }} DormRepair</span>
           <span class="sep" />
-          <el-link :underline="false" class="link">使用协议</el-link>
-          <el-link :underline="false" class="link">隐私政策</el-link>
+          <el-link underline="never" class="link">使用协议</el-link>
+          <el-link underline="never" class="link">隐私政策</el-link>
         </footer>
       </div>
     </section>

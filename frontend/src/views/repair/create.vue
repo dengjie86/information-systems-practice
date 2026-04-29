@@ -273,7 +273,7 @@ onMounted(loadCategories)
   width: 100%;
 }
 
-:deep(.el-button--primary) {
+:deep(.el-button--primary:not(.is-disabled)) {
   background: var(--text);
   border-color: var(--text);
 }

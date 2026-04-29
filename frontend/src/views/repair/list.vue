@@ -35,7 +35,7 @@
               <span>{{ item.dormBuilding }} {{ item.dormRoom }}</span>
               <span>{{ formatTime(item.submitTime) }}</span>
             </div>
-            <p v-if="item.rejectReason" class="reject">{{ item.rejectReason }}</p>
+            <p v-if="item.status === 'REJECTED' && item.rejectReason" class="reject">{{ item.rejectReason }}</p>
           </div>
           <div class="order-side">
             <span class="priority" :class="item.priority">{{ priorityMap[item.priority] }}</span>
@@ -253,7 +253,7 @@ h3 {
   border-top: 1px solid var(--border-soft);
 }
 
-:deep(.el-button--primary) {
+:deep(.el-button--primary:not(.is-disabled)) {
   background: var(--text);
   border-color: var(--text);
 }
