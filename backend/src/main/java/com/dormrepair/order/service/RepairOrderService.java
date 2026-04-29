@@ -154,7 +154,7 @@ public class RepairOrderService {
 
         RepairCategoryEntity category = categoryMapper.selectById(order.getCategoryId());
         List<RepairRecordVO> records = loadRepairRecords(orderId);
-        return toDetail(order, category, records);
+        return toDetail(order, category, records, UserRoles.WORKER.equals(role));
     }
 
     public PageResult<AdminRepairOrderListItemVO> pageAdminOrders(
@@ -270,7 +270,8 @@ public class RepairOrderService {
             .set(RepairOrderEntity::getStatus, OrderStatuses.PENDING_ASSIGN)
             .set(RepairOrderEntity::getAssignedWorkerId, null)
             .set(RepairOrderEntity::getAssignTime, null)
-            .set(RepairOrderEntity::getRejectReason, rejectReason));
+            .set(RepairOrderEntity::getRejectReason, rejectReason)
+            .set(RepairOrderEntity::getDispatchRemark, null));
 
         saveRepairRecord(orderId, loginUserId, "REJECT",
             rejectReason, null,
@@ -376,7 +377,12 @@ public class RepairOrderService {
         );
     }
 
-    private RepairOrderDetailVO toDetail(RepairOrderEntity order, RepairCategoryEntity category, List<RepairRecordVO> records) {
+    private RepairOrderDetailVO toDetail(
+        RepairOrderEntity order,
+        RepairCategoryEntity category,
+        List<RepairRecordVO> records,
+        boolean includeDispatchRemark
+    ) {
         return new RepairOrderDetailVO(
             order.getId(),
             order.getOrderNo(),
@@ -392,6 +398,7 @@ public class RepairOrderService {
             order.getPriority(),
             studentVisibleRejectReason(order),
             order.getAdminRemark(),
+            includeDispatchRemark ? order.getDispatchRemark() : null,
             order.getSubmitTime(),
             order.getAssignTime(),
             order.getAcceptTime(),

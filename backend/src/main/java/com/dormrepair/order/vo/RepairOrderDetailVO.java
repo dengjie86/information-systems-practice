@@ -18,6 +18,7 @@ public record RepairOrderDetailVO(
     String priority,
     String rejectReason,
     String adminRemark,
+    String dispatchRemark,
     LocalDateTime submitTime,
     LocalDateTime assignTime,
     LocalDateTime acceptTime,
