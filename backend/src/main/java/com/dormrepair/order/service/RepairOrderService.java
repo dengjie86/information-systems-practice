@@ -17,6 +17,11 @@ import com.dormrepair.order.dto.WorkerAcceptRequest;
 import com.dormrepair.order.dto.WorkerFinishRequest;
 import com.dormrepair.order.dto.WorkerRecordRequest;
 import com.dormrepair.order.dto.WorkerRejectRequest;
+import com.dormrepair.order.dto.StudentCancelRequest;
+import com.dormrepair.order.dto.StudentEditRequest;
+import com.dormrepair.order.dto.StudentEvaluateRequest;
+import com.dormrepair.evaluation.entity.EvaluationEntity;
+import com.dormrepair.evaluation.mapper.EvaluationMapper;
 import com.dormrepair.record.entity.RepairRecordEntity;
 import com.dormrepair.record.mapper.RepairRecordMapper;
 import com.dormrepair.order.entity.RepairOrderEntity;
@@ -27,6 +32,7 @@ import com.dormrepair.order.vo.CreateRepairOrderResponse;
 import com.dormrepair.order.vo.RepairOrderDetailVO;
 import com.dormrepair.order.vo.RepairOrderListItemVO;
 import com.dormrepair.order.vo.RepairRecordVO;
+import com.dormrepair.order.vo.EvaluationVO;
 import com.dormrepair.user.entity.UserEntity;
 import com.dormrepair.user.mapper.UserMapper;
 import java.util.ArrayList;
@@ -51,17 +57,20 @@ public class RepairOrderService {
     private final UserMapper userMapper;
     private final RepairCategoryMapper categoryMapper;
     private final RepairRecordMapper repairRecordMapper;
+    private final EvaluationMapper evaluationMapper;
 
     public RepairOrderService(
         RepairOrderMapper repairOrderMapper,
         UserMapper userMapper,
         RepairCategoryMapper categoryMapper,
-        RepairRecordMapper repairRecordMapper
+        RepairRecordMapper repairRecordMapper,
+        EvaluationMapper evaluationMapper
     ) {
         this.repairOrderMapper = repairOrderMapper;
         this.userMapper = userMapper;
         this.categoryMapper = categoryMapper;
         this.repairRecordMapper = repairRecordMapper;
+        this.evaluationMapper = evaluationMapper;
     }
 
     @Transactional
@@ -312,6 +321,82 @@ public class RepairOrderService {
             OrderStatuses.PROCESSING, OrderStatuses.PROCESSING);
     }
 
+    @Transactional
+    public void editOrder(Long loginUserId, Long orderId, StudentEditRequest request) {
+        RepairOrderEntity order = getOrderForStudentAction(
+            loginUserId, orderId, OrderStatuses.PENDING_AUDIT, "只有待审核工单才可以编辑");
+
+        RepairCategoryEntity category = categoryMapper.selectById(request.categoryId());
+        if (category == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "故障分类不存在");
+        }
+        if (category.getStatus() == null || category.getStatus() != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "该故障分类已停用");
+        }
+
+        repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .set(RepairOrderEntity::getTitle, request.title().trim())
+            .set(RepairOrderEntity::getCategoryId, request.categoryId())
+            .set(RepairOrderEntity::getDescription,
+                StringUtils.hasText(request.description()) ? request.description().trim() : null)
+            .set(RepairOrderEntity::getImageUrl,
+                StringUtils.hasText(request.imageUrl()) ? request.imageUrl().trim() : null)
+            .set(RepairOrderEntity::getContactPhone,
+                StringUtils.hasText(request.contactPhone()) ? request.contactPhone().trim() : null)
+            .set(RepairOrderEntity::getPriority,
+                StringUtils.hasText(request.priority()) ? request.priority() : "NORMAL"));
+    }
+
+    @Transactional
+    public void cancelOrder(Long loginUserId, Long orderId, StudentCancelRequest request) {
+        RepairOrderEntity order = getOrderForStudentAction(
+            loginUserId, orderId, OrderStatuses.PENDING_AUDIT, "只有待审核工单才可以取消报修");
+        String cancelReason = request == null ? null : request.cancelReason();
+        cancelReason = StringUtils.hasText(cancelReason) ? cancelReason.trim() : null;
+
+        int rows = repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .eq(RepairOrderEntity::getStatus, OrderStatuses.PENDING_AUDIT)
+            .set(RepairOrderEntity::getStatus, OrderStatuses.CANCELLED)
+            .set(RepairOrderEntity::getCloseTime, LocalDateTime.now())
+            .set(RepairOrderEntity::getRejectReason, cancelReason));
+        if (rows == 0) {
+            throw new BusinessException(ResultCode.CONFLICT, "工单状态已变更，请刷新后重试");
+        }
+
+        saveRepairRecord(orderId, loginUserId, "CANCEL",
+            cancelReason, null,
+            OrderStatuses.PENDING_AUDIT, OrderStatuses.CANCELLED);
+    }
+
+    @Transactional
+    public void confirmOrder(Long loginUserId, Long orderId, StudentEvaluateRequest request) {
+        RepairOrderEntity order = getOrderForStudentAction(
+            loginUserId, orderId, OrderStatuses.PENDING_CONFIRM, "只有待确认工单才可以确认完成");
+
+        int rows = repairOrderMapper.update(null, new LambdaUpdateWrapper<RepairOrderEntity>()
+            .eq(RepairOrderEntity::getId, order.getId())
+            .eq(RepairOrderEntity::getStatus, OrderStatuses.PENDING_CONFIRM)
+            .set(RepairOrderEntity::getStatus, OrderStatuses.COMPLETED)
+            .set(RepairOrderEntity::getCloseTime, LocalDateTime.now()));
+        if (rows == 0) {
+            throw new BusinessException(ResultCode.CONFLICT, "工单状态已变更，请刷新后重试");
+        }
+
+        EvaluationEntity evaluation = new EvaluationEntity();
+        evaluation.setOrderId(orderId);
+        evaluation.setUserId(loginUserId);
+        evaluation.setScore(request.score());
+        evaluation.setContent(StringUtils.hasText(request.content()) ? request.content().trim() : null);
+        evaluation.setCreateTime(LocalDateTime.now());
+        evaluationMapper.insert(evaluation);
+
+        saveRepairRecord(orderId, loginUserId, "CONFIRM",
+            "学生确认完成并评价", null,
+            OrderStatuses.PENDING_CONFIRM, OrderStatuses.COMPLETED);
+    }
+
     private List<RepairRecordVO> loadRepairRecords(Long orderId) {
         List<RepairRecordEntity> records = repairRecordMapper.selectList(
             new LambdaQueryWrapper<RepairRecordEntity>()
@@ -404,6 +489,7 @@ public class RepairOrderService {
             order.getAcceptTime(),
             order.getFinishTime(),
             order.getCloseTime(),
+            loadEvaluation(order.getId()),
             records
         );
     }
@@ -470,6 +556,7 @@ public class RepairOrderService {
             order.getAcceptTime(),
             order.getFinishTime(),
             order.getCloseTime(),
+            loadEvaluation(order.getId()),
             records
         );
     }
@@ -507,6 +594,31 @@ public class RepairOrderService {
             throw new BusinessException(ResultCode.CONFLICT, message);
         }
         return order;
+    }
+
+    private RepairOrderEntity getOrderForStudentAction(Long loginUserId, Long orderId, String expectedStatus, String message) {
+        RepairOrderEntity order = repairOrderMapper.selectById(orderId);
+        if (order == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "工单不存在");
+        }
+        if (!Objects.equals(order.getUserId(), loginUserId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "无权操作其他学生的工单");
+        }
+        if (!expectedStatus.equals(order.getStatus())) {
+            throw new BusinessException(ResultCode.CONFLICT, message);
+        }
+        return order;
+    }
+
+    private EvaluationVO loadEvaluation(Long orderId) {
+        EvaluationEntity eval = evaluationMapper.selectOne(
+            new LambdaQueryWrapper<EvaluationEntity>()
+                .eq(EvaluationEntity::getOrderId, orderId)
+        );
+        if (eval == null) {
+            return null;
+        }
+        return new EvaluationVO(eval.getId(), eval.getOrderId(), eval.getScore(), eval.getContent(), eval.getCreateTime());
     }
 
     private void saveRepairRecord(Long orderId, Long workerId, String actionType,

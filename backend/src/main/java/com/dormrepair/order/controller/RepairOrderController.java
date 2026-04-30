@@ -9,6 +9,9 @@ import com.dormrepair.order.dto.WorkerAcceptRequest;
 import com.dormrepair.order.dto.WorkerFinishRequest;
 import com.dormrepair.order.dto.WorkerRecordRequest;
 import com.dormrepair.order.dto.WorkerRejectRequest;
+import com.dormrepair.order.dto.StudentCancelRequest;
+import com.dormrepair.order.dto.StudentEditRequest;
+import com.dormrepair.order.dto.StudentEvaluateRequest;
 import com.dormrepair.order.service.RepairOrderService;
 import com.dormrepair.order.vo.AdminRepairOrderDetailVO;
 import com.dormrepair.order.vo.AdminRepairOrderListItemVO;
@@ -24,6 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -126,6 +130,27 @@ public class RepairOrderController {
     public Result<Void> addRecord(@PathVariable Long id, @Valid @RequestBody WorkerRecordRequest request) {
         LoginUser loginUser = LoginUserContext.requireUser();
         repairOrderService.addRepairRecord(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PutMapping("/{id}")
+    public Result<Void> edit(@PathVariable Long id, @Valid @RequestBody StudentEditRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.editOrder(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/cancel")
+    public Result<Void> cancel(@PathVariable Long id, @Valid @RequestBody(required = false) StudentCancelRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.cancelOrder(loginUser.userId(), id, request);
+        return Result.success();
+    }
+
+    @PostMapping("/{id}/confirm")
+    public Result<Void> confirm(@PathVariable Long id, @Valid @RequestBody StudentEvaluateRequest request) {
+        LoginUser loginUser = LoginUserContext.requireUser();
+        repairOrderService.confirmOrder(loginUser.userId(), id, request);
         return Result.success();
     }
 }

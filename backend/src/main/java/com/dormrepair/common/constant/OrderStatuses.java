@@ -8,6 +8,9 @@ public final class OrderStatuses {
     public static final String PROCESSING = "PROCESSING";
     public static final String PENDING_CONFIRM = "PENDING_CONFIRM";
     public static final String REJECTED = "REJECTED";
+    public static final String CLOSED = "CLOSED";
+    public static final String CANCELLED = "CANCELLED";
+    public static final String COMPLETED = "COMPLETED";
 
     private OrderStatuses() {
     }

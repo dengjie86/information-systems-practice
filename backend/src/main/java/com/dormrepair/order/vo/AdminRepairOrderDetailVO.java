@@ -28,6 +28,7 @@ public record AdminRepairOrderDetailVO(
     LocalDateTime acceptTime,
     LocalDateTime finishTime,
     LocalDateTime closeTime,
+    EvaluationVO evaluation,
     List<RepairRecordVO> records
 ) {
 }
