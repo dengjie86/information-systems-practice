@@ -366,7 +366,7 @@ public class RepairOrderService {
         }
 
         saveRepairRecord(orderId, loginUserId, "CANCEL",
-            cancelReason, null,
+            cancelReason == null ? "学生取消报修，未填写取消原因" : "取消原因：" + cancelReason, null,
             OrderStatuses.PENDING_AUDIT, OrderStatuses.CANCELLED);
     }
 
@@ -388,13 +388,32 @@ public class RepairOrderService {
         evaluation.setOrderId(orderId);
         evaluation.setUserId(loginUserId);
         evaluation.setScore(request.score());
-        evaluation.setContent(StringUtils.hasText(request.content()) ? request.content().trim() : null);
+        String evaluationContent = StringUtils.hasText(request.content()) ? request.content().trim() : null;
+        evaluation.setContent(evaluationContent);
         evaluation.setCreateTime(LocalDateTime.now());
         evaluationMapper.insert(evaluation);
 
         saveRepairRecord(orderId, loginUserId, "CONFIRM",
-            "学生确认完成并评价", null,
+            buildConfirmRecordDesc(request.score(), evaluationContent), null,
             OrderStatuses.PENDING_CONFIRM, OrderStatuses.COMPLETED);
+    }
+
+    private String buildConfirmRecordDesc(Integer score, String content) {
+        return "学生确认完成并评价\n评价等级：" + evaluationScoreLabel(score)
+            + "\n评价内容：" + (StringUtils.hasText(content) ? content : "未填写");
+    }
+
+    private String evaluationScoreLabel(Integer score) {
+        if (Integer.valueOf(1).equals(score)) {
+            return "差评";
+        }
+        if (Integer.valueOf(3).equals(score)) {
+            return "中评";
+        }
+        if (Integer.valueOf(5).equals(score)) {
+            return "好评";
+        }
+        return score == null ? "未评分" : score + "分";
     }
 
     private List<RepairRecordVO> loadRepairRecords(Long orderId) {

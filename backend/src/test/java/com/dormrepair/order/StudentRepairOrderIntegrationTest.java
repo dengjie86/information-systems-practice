@@ -252,6 +252,59 @@ class StudentRepairOrderIntegrationTest {
             .andExpect(jsonPath("$.code").value(403));
     }
 
+    @Test
+    void 学生确认完成后处理记录包含评价档位和评价内容() throws Exception {
+        jdbcTemplate.update(
+            """
+                INSERT INTO repair_order
+                (id, order_no, user_id, title, category_id, description, image_url, dorm_building, dorm_room,
+                 contact_phone, status, priority, assigned_worker_id, finish_time, submit_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """,
+            14L,
+            "WO202604250004",
+            1L,
+            "水龙头已修好",
+            1L,
+            "等待学生确认",
+            "/img/shuilongtou.png",
+            "1A",
+            "101",
+            "13800000011",
+            "PENDING_CONFIRM",
+            "NORMAL",
+            4L
+        );
+
+        String token = loginAndGetToken("student1", "123456");
+
+        mockMvc.perform(
+                post("/api/orders/14/confirm")
+                    .header("Authorization", "Bearer " + token)
+                    .contentType("application/json")
+                    .content("""
+                        {
+                          "score":5,
+                          "content":"维修及时，效果很好"
+                        }
+                        """)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.code").value(200));
+
+        mockMvc.perform(
+                get("/api/orders/14")
+                    .header("Authorization", "Bearer " + token)
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.data.status").value("COMPLETED"))
+            .andExpect(jsonPath("$.data.evaluation.score").value(5))
+            .andExpect(jsonPath("$.data.evaluation.content").value("维修及时，效果很好"))
+            .andExpect(jsonPath("$.data.records[0].actionType").value("CONFIRM"))
+            .andExpect(jsonPath("$.data.records[0].actionDesc").value(org.hamcrest.Matchers.containsString("评价等级：好评")))
+            .andExpect(jsonPath("$.data.records[0].actionDesc").value(org.hamcrest.Matchers.containsString("评价内容：维修及时，效果很好")));
+    }
+
     private String loginAndGetToken(String username, String password) throws Exception {
         MvcResult loginResult = mockMvc.perform(
                 post("/api/auth/login")
