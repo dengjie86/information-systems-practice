@@ -83,6 +83,7 @@ const statusFilters = [
   { label: '已驳回', value: 'REJECTED' },
   { label: '处理中', value: 'PROCESSING' },
   { label: '待确认', value: 'PENDING_CONFIRM' },
+  { label: '已取消', value: 'CANCELLED' },
   { label: '已完成', value: 'COMPLETED' },
 ]
 

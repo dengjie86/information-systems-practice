@@ -158,6 +158,11 @@ body {
   background: #fef0f0 !important;
   border-color: #fde2e2 !important;
 }
+.status-cancelled.el-tag {
+  color: #71717a !important;
+  background: #f4f4f5 !important;
+  border-color: #e4e4e7 !important;
+}
 .status-closed.el-tag {
   color: #909399 !important;
   background: #f4f4f5 !important;

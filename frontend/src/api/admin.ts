@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 import type { UserInfo } from '@/stores/user'
-import type { OrderStatus, PageResult, Priority, RepairCategory } from './repair'
+import type { Evaluation, OrderStatus, PageResult, Priority, RepairCategory, RepairRecord } from './repair'
 
 export interface AdminOrder {
   id: number
@@ -27,6 +27,8 @@ export interface AdminOrder {
   acceptTime?: string
   finishTime?: string
   closeTime?: string
+  evaluation?: Evaluation
+  records?: RepairRecord[]
 }
 
 export interface AdminOrderQuery {

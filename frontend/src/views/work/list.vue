@@ -79,6 +79,10 @@ const timelineRecords = computed(() => {
   return current.value?.records ?? []
 })
 
+const evaluationLabel = computed(() => {
+  return scoreLabel(current.value?.evaluation?.score)
+})
+
 async function loadOrders() {
   loading.value = true
   try {
@@ -197,7 +201,23 @@ function actionLabel(actionType: string) {
     ACCEPT: '接单',
     REJECT: '拒单',
     FINISH: '完成维修',
+    CANCEL: '取消报修',
+    CONFIRM: '确认完成',
+    RECORD: '维修记录',
   }[actionType] ?? actionType
+}
+
+function scoreLabel(score?: number) {
+  if (score === 1) return '差评'
+  if (score === 3) return '中评'
+  if (score === 5) return '好评'
+  return '-'
+}
+
+function shouldShowRecordEvaluation(record: { actionType: string; actionDesc?: string }) {
+  return record.actionType === 'CONFIRM'
+    && !!current.value?.evaluation
+    && !record.actionDesc?.includes('评价等级')
 }
 
 function onFilter() {
@@ -342,6 +362,10 @@ onMounted(() => {
               >
                 <div class="record-title">{{ actionLabel(record.actionType) }}</div>
                 <p v-if="record.actionDesc">{{ record.actionDesc }}</p>
+                <p v-if="shouldShowRecordEvaluation(record)">
+                  评价等级：{{ evaluationLabel }}<br>
+                  评价内容：{{ current.evaluation?.content || '未填写' }}
+                </p>
                 <el-link v-if="record.resultImage" :href="record.resultImage" target="_blank" underline="never">
                   {{ record.resultImage }}
                 </el-link>

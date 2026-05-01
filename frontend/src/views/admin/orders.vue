@@ -64,6 +64,7 @@ const statusFilters = [
   { label: '待接单', value: 'PENDING_ACCEPT' },
   { label: '处理中', value: 'PROCESSING' },
   { label: '待确认', value: 'PENDING_CONFIRM' },
+  { label: '已取消', value: 'CANCELLED' },
   { label: '已完成', value: 'COMPLETED' },
   { label: '已驳回', value: 'REJECTED' },
 ]
@@ -78,7 +79,7 @@ const actionRules = computed<FormRules>(() => ({
 }))
 
 const activeCount = computed(() =>
-  orders.value.filter(item => !['COMPLETED', 'CLOSED', 'REJECTED'].includes(item.status)).length
+  orders.value.filter(item => !['COMPLETED', 'CANCELLED', 'CLOSED', 'REJECTED'].includes(item.status)).length
 )
 
 const selectedStatusLabel = computed(() =>
@@ -88,6 +89,12 @@ const selectedStatusLabel = computed(() =>
 const tableEmptyText = computed(() =>
   query.status ? `暂无${selectedStatusLabel.value}工单` : '暂无工单数据'
 )
+
+const timelineRecords = computed(() => current.value?.records ?? [])
+
+const evaluationLabel = computed(() => {
+  return scoreLabel(current.value?.evaluation?.score)
+})
 
 const visibleRejectReason = computed(() => {
   const order = current.value
@@ -199,6 +206,30 @@ function statusType(status: OrderStatus) {
 
 function priorityLabel(priority: Priority) {
   return priorityMap[priority] ?? priority
+}
+
+function actionLabel(actionType: string) {
+  return {
+    ACCEPT: '接单',
+    REJECT: '拒单',
+    FINISH: '完成维修',
+    CANCEL: '取消报修',
+    CONFIRM: '确认完成',
+    RECORD: '维修记录',
+  }[actionType] ?? actionType
+}
+
+function scoreLabel(score?: number) {
+  if (score === 1) return '差评'
+  if (score === 3) return '中评'
+  if (score === 5) return '好评'
+  return '-'
+}
+
+function shouldShowRecordEvaluation(record: { actionType: string; actionDesc?: string }) {
+  return record.actionType === 'CONFIRM'
+    && !!current.value?.evaluation
+    && !record.actionDesc?.includes('评价等级')
 }
 
 function onFilter() {
@@ -333,6 +364,28 @@ onMounted(() => {
           <section v-if="current.dispatchRemark" class="desc note private">
             <h3>派单备注</h3>
             <p>{{ current.dispatchRemark }}</p>
+          </section>
+          <section class="records">
+            <h3>处理记录</h3>
+            <el-empty v-if="!timelineRecords.length" description="暂无处理记录" />
+            <el-timeline v-else>
+              <el-timeline-item
+                v-for="record in timelineRecords"
+                :key="record.id"
+                :timestamp="formatTime(record.actionTime)"
+                type="primary"
+              >
+                <div class="record-title">{{ actionLabel(record.actionType) }}</div>
+                <p v-if="record.actionDesc">{{ record.actionDesc }}</p>
+                <p v-if="shouldShowRecordEvaluation(record)">
+                  评价等级：{{ evaluationLabel }}<br>
+                  评价内容：{{ current.evaluation?.content || '未填写' }}
+                </p>
+                <el-link v-if="record.resultImage" :href="record.resultImage" target="_blank" underline="never">
+                  {{ record.resultImage }}
+                </el-link>
+              </el-timeline-item>
+            </el-timeline>
           </section>
           <div class="drawer-actions">
             <el-button :disabled="!canApprove(current)" @click="openAction('approve')">审核通过</el-button>
@@ -542,7 +595,8 @@ onMounted(() => {
   }
 }
 
-.desc {
+.desc,
+.records {
   padding: 14px;
   border: 1px solid var(--border-soft);
   border-radius: 10px;
@@ -569,7 +623,15 @@ onMounted(() => {
     margin: 0;
     color: var(--text-muted);
     line-height: 1.7;
+    white-space: pre-wrap;
   }
+}
+
+.record-title {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .drawer-actions {

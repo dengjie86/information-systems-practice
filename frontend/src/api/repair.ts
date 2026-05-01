@@ -7,6 +7,7 @@ export type OrderStatus =
   | 'PENDING_ACCEPT'
   | 'PROCESSING'
   | 'PENDING_CONFIRM'
+  | 'CANCELLED'
   | 'COMPLETED'
   | 'CLOSED'
 
@@ -41,14 +42,23 @@ export interface RepairOrder {
   acceptTime?: string
   finishTime?: string
   closeTime?: string
+  evaluation?: Evaluation
   records?: RepairRecord[]
+}
+
+export interface Evaluation {
+  id: number
+  orderId: number
+  score: 1 | 3 | 5
+  content?: string
+  createTime?: string
 }
 
 export interface RepairRecord {
   id: number
   orderId: number
   workerId: number
-  actionType: 'ACCEPT' | 'REJECT' | 'FINISH'
+  actionType: 'ACCEPT' | 'REJECT' | 'FINISH' | 'CANCEL' | 'CONFIRM' | 'RECORD'
   actionDesc?: string
   resultImage?: string
   statusBefore?: OrderStatus
@@ -70,6 +80,17 @@ export interface CreateOrderParams {
   imageUrl?: string
   contactPhone?: string
   priority?: Priority
+}
+
+export type EditOrderParams = CreateOrderParams
+
+export interface CancelOrderParams {
+  cancelReason?: string
+}
+
+export interface EvaluateOrderParams {
+  score: 1 | 3 | 5
+  content?: string
 }
 
 export interface CreateOrderResult {
@@ -109,3 +130,12 @@ export const rejectWorkerOrder = (id: number | string, rejectReason: string) =>
 
 export const finishRepairOrder = (id: number | string, data: { actionDesc: string }) =>
   request.post<any, null>(`/orders/${id}/finish`, data)
+
+export const editOrder = (id: number | string, data: EditOrderParams) =>
+  request.put<any, null>(`/orders/${id}`, data)
+
+export const cancelOrder = (id: number | string, data?: CancelOrderParams) =>
+  request.post<any, null>(`/orders/${id}/cancel`, data ?? {})
+
+export const confirmOrder = (id: number | string, data: EvaluateOrderParams) =>
+  request.post<any, null>(`/orders/${id}/confirm`, data)

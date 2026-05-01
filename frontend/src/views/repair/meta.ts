@@ -6,6 +6,7 @@ export const statusMap: Record<OrderStatus, { label: string; type: 'primary' | '
   PENDING_ACCEPT: { label: '待接单', type: 'primary', className: 'status-pending-accept' },
   PROCESSING: { label: '处理中', type: 'primary', className: 'status-processing' },
   PENDING_CONFIRM: { label: '待确认', type: 'warning', className: 'status-pending-confirm' },
+  CANCELLED: { label: '已取消', type: 'info', className: 'status-cancelled' },
   COMPLETED: { label: '已完成', type: 'success', className: 'status-completed' },
   REJECTED: { label: '已驳回', type: 'danger', className: 'status-rejected' },
   CLOSED: { label: '已关闭', type: 'info', className: 'status-closed' },
