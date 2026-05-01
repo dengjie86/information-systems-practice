@@ -8,13 +8,19 @@ const request = axios.create({
   timeout: 10000,
 })
 
+let unauthorizedHandled = false
+
 function isLoginRequest(url?: string) {
   return url?.includes('/auth/login') ?? false
 }
 
 function handleUnauthorized(msg?: string) {
+  if (unauthorizedHandled) return
+  unauthorizedHandled = true
   useUserStore().logout()
-  router.push('/login')
+  if (router.currentRoute.value.path !== '/login') {
+    router.push('/login')
+  }
   ElMessage.warning(msg || '登录已失效，请重新登录')
 }
 
@@ -32,7 +38,12 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   res => {
     const { code, data, msg } = res.data ?? {}
-    if (code === 200) return data
+    if (code === 200) {
+      if (isLoginRequest(res.config.url)) {
+        unauthorizedHandled = false
+      }
+      return data
+    }
     if (code === 401) {
       if (isLoginRequest(res.config.url)) {
         ElMessage.error(msg || '用户名或密码错误')

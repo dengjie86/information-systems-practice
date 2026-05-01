@@ -16,6 +16,7 @@ import {
 } from '@/api/admin'
 import type { OrderStatus } from '@/api/repair'
 import type { Priority } from '@/api/repair'
+import ImagePreview from '@/components/ImagePreview.vue'
 import type { UserInfo } from '@/stores/user'
 import { formatTime, priorityMap, statusClass, statusMap } from '@/views/repair/meta'
 
@@ -353,6 +354,7 @@ onMounted(() => {
             <h3>问题描述</h3>
             <p>{{ current.description || '学生未填写详细描述。' }}</p>
           </section>
+          <ImagePreview :src="current.imageUrl" title="故障图片" />
           <section v-if="visibleRejectReason" class="desc note danger">
             <h3>{{ rejectReasonTitle }}</h3>
             <p>{{ visibleRejectReason }}</p>
@@ -381,9 +383,7 @@ onMounted(() => {
                   评价等级：{{ evaluationLabel }}<br>
                   评价内容：{{ current.evaluation?.content || '未填写' }}
                 </p>
-                <el-link v-if="record.resultImage" :href="record.resultImage" target="_blank" underline="never">
-                  {{ record.resultImage }}
-                </el-link>
+                <ImagePreview :src="record.resultImage" title="维修结果图片" compact />
               </el-timeline-item>
             </el-timeline>
           </section>

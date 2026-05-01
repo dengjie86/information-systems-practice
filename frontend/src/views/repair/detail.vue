@@ -14,6 +14,8 @@ import {
   type RepairCategory,
   type RepairOrder,
 } from '@/api/repair'
+import ImagePreview from '@/components/ImagePreview.vue'
+import ImageUploader from '@/components/ImageUploader.vue'
 import { formatTime, priorityMap, statusClass, statusMap } from './meta'
 
 const route = useRoute()
@@ -107,6 +109,8 @@ const evaluationLabel = computed(() => {
   return evaluationOptions.find(item => item.value === score)?.label ?? '-'
 })
 
+const timelineRecords = computed(() => detail.value?.records ?? [])
+
 async function loadDetail() {
   loading.value = true
   try {
@@ -186,6 +190,17 @@ function openEvaluateDialog() {
   evaluateDialogOpen.value = true
 }
 
+function actionLabel(actionType: string) {
+  return {
+    ACCEPT: '接单',
+    REJECT: '拒单',
+    FINISH: '完成维修',
+    CANCEL: '取消报修',
+    CONFIRM: '确认完成',
+    RECORD: '维修记录',
+  }[actionType] ?? actionType
+}
+
 async function submitEvaluation() {
   if (!detail.value || submitting.value) return
   const ok = await evaluateFormRef.value?.validate().catch(() => false)
@@ -255,10 +270,7 @@ onMounted(loadDetail)
         </header>
         <p class="desc">{{ detail.description || '未填写问题描述' }}</p>
 
-        <div v-if="detail.imageUrl" class="image-line">
-          <span>故障图片</span>
-          <el-link :href="detail.imageUrl" target="_blank" underline="never">{{ detail.imageUrl }}</el-link>
-        </div>
+        <ImagePreview :src="detail.imageUrl" title="故障图片" />
 
         <div v-if="visibleRejectReason || detail.adminRemark" class="notice">
           <b>{{ visibleRejectReason ? '驳回原因' : '管理员备注' }}</b>
@@ -293,6 +305,24 @@ onMounted(loadDetail)
           </el-timeline-item>
         </el-timeline>
       </section>
+
+      <section v-if="timelineRecords.length" class="panel">
+        <header>
+          <h2>处理记录</h2>
+        </header>
+        <el-timeline>
+          <el-timeline-item
+            v-for="record in timelineRecords"
+            :key="record.id"
+            :timestamp="formatTime(record.actionTime)"
+            type="primary"
+          >
+            <div class="record-title">{{ actionLabel(record.actionType) }}</div>
+            <p v-if="record.actionDesc" class="record-desc">{{ record.actionDesc }}</p>
+            <ImagePreview :src="record.resultImage" title="维修结果图片" compact />
+          </el-timeline-item>
+        </el-timeline>
+      </section>
     </template>
 
     <el-dialog v-model="editDialogOpen" title="编辑报修" width="620px">
@@ -322,8 +352,8 @@ onMounted(loadDetail)
         </el-form-item>
 
         <div class="form-row">
-          <el-form-item label="故障图片地址" prop="imageUrl">
-            <el-input v-model.trim="editForm.imageUrl" placeholder="图片 URL" />
+          <el-form-item label="故障图片" prop="imageUrl">
+            <ImageUploader v-model="editForm.imageUrl" type="repair" title="上传故障图片" />
           </el-form-item>
           <el-form-item label="联系电话" prop="contactPhone">
             <el-input v-model.trim="editForm.contactPhone" maxlength="20" />
@@ -486,6 +516,20 @@ onMounted(loadDetail)
   p {
     margin: 6px 0 0;
   }
+}
+
+.record-title {
+  margin-bottom: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.record-desc {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.7;
+  white-space: pre-wrap;
 }
 
 .form-row {

@@ -13,6 +13,8 @@ import {
   type Priority,
   type RepairOrder,
 } from '@/api/repair'
+import ImagePreview from '@/components/ImagePreview.vue'
+import ImageUploader from '@/components/ImageUploader.vue'
 import { formatTime, priorityMap, statusClass, statusMap } from '@/views/repair/meta'
 
 type WorkerAction = 'accept' | 'reject' | 'finish'
@@ -42,6 +44,7 @@ const actionForm = reactive({
   remark: '',
   rejectReason: '',
   actionDesc: '',
+  resultImage: '',
 })
 
 const statusFilters = [
@@ -124,6 +127,7 @@ function resetActionForm() {
   actionForm.remark = ''
   actionForm.rejectReason = ''
   actionForm.actionDesc = ''
+  actionForm.resultImage = ''
   actionFormRef.value?.clearValidate()
 }
 
@@ -154,6 +158,7 @@ async function submitAction() {
     } else {
       await finishRepairOrder(current.value.id, {
         actionDesc: actionForm.actionDesc,
+        resultImage: optionalText(actionForm.resultImage),
       })
       ElMessage.success('已提交完成，等待学生确认')
     }
@@ -345,10 +350,7 @@ onMounted(() => {
             <p>{{ current.dispatchRemark }}</p>
           </section>
 
-          <section v-if="current.imageUrl" class="desc image-link">
-            <h3>故障图片</h3>
-            <el-link :href="current.imageUrl" target="_blank" underline="never">{{ current.imageUrl }}</el-link>
-          </section>
+          <ImagePreview :src="current.imageUrl" title="故障图片" />
 
           <section class="records">
             <h3>处理记录</h3>
@@ -366,9 +368,7 @@ onMounted(() => {
                   评价等级：{{ evaluationLabel }}<br>
                   评价内容：{{ current.evaluation?.content || '未填写' }}
                 </p>
-                <el-link v-if="record.resultImage" :href="record.resultImage" target="_blank" underline="never">
-                  {{ record.resultImage }}
-                </el-link>
+                <ImagePreview :src="record.resultImage" title="维修结果图片" compact />
               </el-timeline-item>
             </el-timeline>
           </section>
@@ -393,6 +393,9 @@ onMounted(() => {
         <template v-if="actionMode === 'finish'">
           <el-form-item label="完成说明" prop="actionDesc">
             <el-input v-model.trim="actionForm.actionDesc" type="textarea" :rows="4" maxlength="2000" show-word-limit />
+          </el-form-item>
+          <el-form-item label="维修结果图片" prop="resultImage">
+            <ImageUploader v-model="actionForm.resultImage" type="result" title="上传结果图片" />
           </el-form-item>
         </template>
       </el-form>
@@ -594,10 +597,6 @@ onMounted(() => {
     line-height: 1.7;
     white-space: pre-wrap;
   }
-}
-
-.image-link {
-  background: var(--bg-subtle);
 }
 
 .note.private {

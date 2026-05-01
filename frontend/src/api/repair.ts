@@ -128,7 +128,7 @@ export const acceptOrder = (id: number | string, remark?: string) =>
 export const rejectWorkerOrder = (id: number | string, rejectReason: string) =>
   request.post<any, null>(`/orders/${id}/worker-reject`, { rejectReason })
 
-export const finishRepairOrder = (id: number | string, data: { actionDesc: string }) =>
+export const finishRepairOrder = (id: number | string, data: { actionDesc: string; resultImage?: string }) =>
   request.post<any, null>(`/orders/${id}/finish`, data)
 
 export const editOrder = (id: number | string, data: EditOrderParams) =>

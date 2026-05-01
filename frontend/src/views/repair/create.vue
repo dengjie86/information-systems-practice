@@ -44,8 +44,8 @@
           </el-form-item>
 
           <div class="form-row">
-            <el-form-item label="故障图片地址" prop="imageUrl">
-              <el-input v-model.trim="form.imageUrl" placeholder="第 16 次提交接入真实上传，这里可先填图片 URL" />
+            <el-form-item label="故障图片" prop="imageUrl">
+              <ImageUploader v-model="form.imageUrl" type="repair" title="上传故障图片" />
             </el-form-item>
             <el-form-item label="联系电话" prop="contactPhone">
               <el-input v-model.trim="form.contactPhone" placeholder="默认使用个人资料中的手机号" maxlength="20" />
@@ -84,6 +84,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { EditPen, Tickets } from '@element-plus/icons-vue'
 import { createOrder, getCategories, type Priority, type RepairCategory } from '@/api/repair'
+import ImageUploader from '@/components/ImageUploader.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
