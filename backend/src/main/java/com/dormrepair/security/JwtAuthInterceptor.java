@@ -33,7 +33,7 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
         }
 
         String requestUri = request.getRequestURI();
-        if (!requestUri.startsWith("/api/") || WHITE_LIST.contains(requestUri)) {
+        if (!requestUri.startsWith("/api/") || WHITE_LIST.contains(requestUri) || isPublicFileRead(request, requestUri)) {
             return true;
         }
 
@@ -54,6 +54,10 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
 
         LoginUserContext.set(loginUser);
         return true;
+    }
+
+    private boolean isPublicFileRead(HttpServletRequest request, String requestUri) {
+        return "GET".equalsIgnoreCase(request.getMethod()) && requestUri.startsWith("/api/files/");
     }
 
     @Override
