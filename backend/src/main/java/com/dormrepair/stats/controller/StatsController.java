@@ -8,7 +8,9 @@ import com.dormrepair.security.LoginUser;
 import com.dormrepair.security.LoginUserContext;
 import com.dormrepair.stats.service.StatsService;
 import com.dormrepair.stats.vo.CategoryDistributionVO;
+import com.dormrepair.stats.vo.DailyTrendVO;
 import com.dormrepair.stats.vo.OverviewVO;
+import com.dormrepair.stats.vo.WorkerLoadVO;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +35,18 @@ public class StatsController {
     public Result<List<CategoryDistributionVO>> category() {
         checkAdmin();
         return Result.success(statsService.getCategoryDistribution());
+    }
+
+    @GetMapping("/worker-load")
+    public Result<List<WorkerLoadVO>> workerLoad() {
+        checkAdmin();
+        return Result.success(statsService.getWorkerLoad());
+    }
+
+    @GetMapping("/trend")
+    public Result<List<DailyTrendVO>> trend() {
+        checkAdmin();
+        return Result.success(statsService.getRecentTrend());
     }
 
     private void checkAdmin() {

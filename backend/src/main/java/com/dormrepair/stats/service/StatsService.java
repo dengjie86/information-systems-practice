@@ -3,7 +3,11 @@ package com.dormrepair.stats.service;
 import com.dormrepair.common.constant.OrderStatuses;
 import com.dormrepair.stats.mapper.StatsMapper;
 import com.dormrepair.stats.vo.CategoryDistributionVO;
+import com.dormrepair.stats.vo.DailyTrendVO;
 import com.dormrepair.stats.vo.OverviewVO;
+import com.dormrepair.stats.vo.WorkerLoadVO;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -52,5 +56,46 @@ public class StatsService {
             list.add(new CategoryDistributionVO(name, cnt));
         }
         return list;
+    }
+
+    public List<WorkerLoadVO> getWorkerLoad() {
+        List<WorkerLoadVO> list = new ArrayList<>();
+        for (Map<String, Object> row : statsMapper.countByWorker()) {
+            Long wid = ((Number) row.get("wid")).longValue();
+            String wname = (String) row.get("wname");
+            Long total = ((Number) row.get("total")).longValue();
+            Object completedObj = row.get("completed");
+            // SUM 在没数据时可能返回 null
+            long completed = completedObj == null ? 0L : ((Number) completedObj).longValue();
+            list.add(new WorkerLoadVO(wid, wname, total, completed));
+        }
+        return list;
+    }
+
+    public List<DailyTrendVO> getRecentTrend() {
+        // 把查出来的结果先塞进 map
+        Map<String, Long> dayMap = new HashMap<>();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        for (Map<String, Object> row : statsMapper.countRecentDays()) {
+            Object dayObj = row.get("day");
+            String dayStr;
+            if (dayObj instanceof java.sql.Date d) {
+                dayStr = d.toLocalDate().format(fmt);
+            } else if (dayObj instanceof LocalDate ld) {
+                dayStr = ld.format(fmt);
+            } else {
+                dayStr = dayObj.toString();
+            }
+            Long cnt = ((Number) row.get("cnt")).longValue();
+            dayMap.put(dayStr, cnt);
+        }
+        // 补齐近7天 没数据的填0
+        List<DailyTrendVO> result = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        for (int i = 6; i >= 0; i--) {
+            String d = today.minusDays(i).format(fmt);
+            result.add(new DailyTrendVO(d, dayMap.getOrDefault(d, 0L)));
+        }
+        return result;
     }
 }
