@@ -32,7 +32,7 @@
             <Expand v-else />
           </el-icon>
           <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item :to="{ path: homePath }">首页</el-breadcrumb-item>
             <el-breadcrumb-item>{{ currentTitle }}</el-breadcrumb-item>
           </el-breadcrumb>
         </div>
@@ -76,7 +76,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useUserStore, type Role } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
-  Odometer, Tickets, UserFilled, DataAnalysis, EditPen, Menu as MenuIcon, Tools,
+  Odometer, Tickets, UserFilled, EditPen, Menu as MenuIcon, Tools,
   Fold, Expand, CaretBottom, Search, Bell, House,
 } from '@element-plus/icons-vue'
 
@@ -100,11 +100,10 @@ const menusByRole: Record<Role, MenuItem[]> = {
     { path: '/repair/list',   title: '我的工单', icon: markRaw(Tickets) },
   ],
   ADMIN: [
-    { path: '/home',       title: '工作台',   icon: markRaw(Odometer) },
+    { path: '/stats',      title: '工作台',   icon: markRaw(Odometer) },
     { path: '/order/list', title: '工单管理', icon: markRaw(Tickets) },
     { path: '/user/list',  title: '用户管理', icon: markRaw(UserFilled) },
     { path: '/category',   title: '故障分类', icon: markRaw(MenuIcon) },
-    { path: '/stats',      title: '统计分析', icon: markRaw(DataAnalysis) },
   ],
   WORKER: [
     { path: '/home',      title: '工作台',   icon: markRaw(Odometer) },
@@ -114,6 +113,10 @@ const menusByRole: Record<Role, MenuItem[]> = {
 
 const menus = computed(() =>
   menusByRole[userStore.role as Role] ?? menusByRole.ADMIN
+)
+
+const homePath = computed(() =>
+  userStore.role === 'ADMIN' ? '/stats' : '/home'
 )
 
 const currentTitle = computed(() => {

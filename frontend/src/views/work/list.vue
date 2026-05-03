@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
+import { computed, onMounted, reactive, ref, shallowRef, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Refresh, View } from '@element-plus/icons-vue'
 import {
@@ -19,6 +20,7 @@ import { formatTime, priorityMap, statusClass, statusMap } from '@/views/repair/
 
 type WorkerAction = 'accept' | 'reject' | 'finish'
 
+const route = useRoute()
 const loading = shallowRef(false)
 const detailLoading = shallowRef(false)
 const submitting = shallowRef(false)
@@ -54,6 +56,13 @@ const statusFilters = [
   { label: '待确认', value: 'PENDING_CONFIRM' },
   { label: '已完成', value: 'COMPLETED' },
 ]
+
+function parseStatusParam(value: unknown): OrderStatus | '' {
+  const raw = Array.isArray(value) ? value[0] : value
+  return statusFilters.some(item => item.value === raw) ? raw as OrderStatus | '' : ''
+}
+
+query.status = parseStatusParam(route.query.status)
 
 const actionTitle = computed(() => ({
   accept: '接单',
@@ -239,6 +248,17 @@ onMounted(() => {
   loadOrders()
   loadSummaryCounts()
 })
+
+watch(
+  () => route.query.status,
+  (value) => {
+    const nextStatus = parseStatusParam(value)
+    if (query.status === nextStatus) return
+    query.status = nextStatus
+    query.pageNum = 1
+    loadOrders()
+  }
+)
 </script>
 
 <template>

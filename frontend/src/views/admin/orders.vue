@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, shallowRef } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Refresh, View } from '@element-plus/icons-vue'
 import {
@@ -20,6 +21,7 @@ import ImagePreview from '@/components/ImagePreview.vue'
 import type { UserInfo } from '@/stores/user'
 import { formatTime, priorityMap, statusClass, statusMap } from '@/views/repair/meta'
 
+const route = useRoute()
 const loading = shallowRef(false)
 const detailLoading = shallowRef(false)
 const submitting = shallowRef(false)
@@ -69,6 +71,13 @@ const statusFilters = [
   { label: '已完成', value: 'COMPLETED' },
   { label: '已驳回', value: 'REJECTED' },
 ]
+
+function parseStatusParam(value: unknown): OrderStatus | '' {
+  const raw = Array.isArray(value) ? value[0] : value
+  return statusFilters.some(item => item.value === raw) ? raw as OrderStatus | '' : ''
+}
+
+query.status = parseStatusParam(route.query.status)
 
 const actionRules = computed<FormRules>(() => ({
   rejectReason: actionMode.value === 'reject'

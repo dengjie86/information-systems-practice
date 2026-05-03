@@ -58,13 +58,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ArrowRight, Plus } from '@element-plus/icons-vue'
 import { getMyOrders, type OrderStatus, type RepairOrder } from '@/api/repair'
 import { formatTime, priorityMap, statusClass, statusMap } from './meta'
 
 const router = useRouter()
+const route = useRoute()
 const loading = ref(false)
 const orders = ref<RepairOrder[]>([])
 const total = ref(0)
@@ -86,6 +87,13 @@ const statusFilters = [
   { label: '已取消', value: 'CANCELLED' },
   { label: '已完成', value: 'COMPLETED' },
 ]
+
+function parseStatusParam(value: unknown): OrderStatus | '' {
+  const raw = Array.isArray(value) ? value[0] : value
+  return statusFilters.some(item => item.value === raw) ? raw as OrderStatus | '' : ''
+}
+
+query.status = parseStatusParam(route.query.status)
 
 const selectedStatusLabel = computed(() =>
   statusFilters.find(item => item.value === query.status)?.label ?? '该状态'
@@ -110,6 +118,17 @@ const onFilter = () => {
 }
 
 onMounted(loadOrders)
+
+watch(
+  () => route.query.status,
+  (value) => {
+    const nextStatus = parseStatusParam(value)
+    if (query.status === nextStatus) return
+    query.status = nextStatus
+    query.pageNum = 1
+    loadOrders()
+  }
+)
 </script>
 
 <style scoped lang="scss">

@@ -56,6 +56,33 @@ export interface CategoryParams {
   sortOrder?: number
 }
 
+export interface OverviewStats {
+  total: number
+  completed: number
+  processing: number
+  pendingAudit: number
+  cancelled: number
+  rejected: number
+  completedRate: number
+}
+
+export interface CategoryDistribution {
+  name: string
+  count: number
+}
+
+export interface WorkerLoad {
+  workerId: number
+  workerName: string
+  total: number
+  completed: number
+}
+
+export interface DailyTrend {
+  date: string
+  count: number
+}
+
 export const getAdminOrders = (params: AdminOrderQuery) =>
   request.get<any, PageResult<AdminOrder>>('/orders/admin', { params })
 
@@ -96,3 +123,15 @@ export const updateCategoryStatus = (id: number, status: 0 | 1) =>
 
 export const deleteCategory = (id: number) =>
   request.delete<any, null>(`/category/${id}`)
+
+export const getStatsOverview = () =>
+  request.get<any, OverviewStats>('/stats/overview')
+
+export const getStatsCategory = () =>
+  request.get<any, CategoryDistribution[]>('/stats/category')
+
+export const getStatsWorkerLoad = () =>
+  request.get<any, WorkerLoad[]>('/stats/worker-load')
+
+export const getStatsTrend = () =>
+  request.get<any, DailyTrend[]>('/stats/trend')

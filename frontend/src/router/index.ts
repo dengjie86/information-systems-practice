@@ -1,7 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore, type Role } from '@/stores/user'
 
-const Placeholder = () => import('@/views/placeholder.vue')
+function roleHome(role: Role | null) {
+  return role === 'ADMIN' ? '/stats' : '/home'
+}
 
 const router = createRouter({
   history: createWebHistory(),
@@ -68,8 +70,8 @@ const router = createRouter({
         {
           path: 'stats',
           name: 'Stats',
-          component: Placeholder,
-          meta: { title: '统计分析', roles: ['ADMIN'] as Role[] },
+          component: () => import('@/views/admin/stats.vue'),
+          meta: { title: '工作台', roles: ['ADMIN'] as Role[] },
         },
         {
           path: 'work/list',
@@ -85,21 +87,26 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const token = localStorage.getItem('token')
+  const userStore = useUserStore()
+  const role = userStore.role
+
   if (to.meta.public) {
-    return token ? '/home' : true
+    return token ? roleHome(role) : true
   }
   if (!token) return '/login'
 
+  if (to.path === '/home' && role === 'ADMIN') {
+    return '/stats'
+  }
+
   const roles = to.meta.roles as Role[] | undefined
   if (roles?.length) {
-    const userStore = useUserStore()
-    const role = userStore.role
     if (!role) {
       userStore.logout()
       return '/login'
     }
     if (!roles.includes(role)) {
-      return '/home'
+      return roleHome(role)
     }
   }
   return true
