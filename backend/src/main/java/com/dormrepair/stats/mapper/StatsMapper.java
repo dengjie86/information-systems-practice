@@ -33,4 +33,8 @@ public interface StatsMapper {
         + "WHERE submit_time >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) "
         + "GROUP BY DATE(submit_time)")
     List<Map<String, Object>> countRecentDays();
+
+    // 按评分统计 1-5分各多少条
+    @Select("SELECT score, COUNT(*) AS cnt FROM evaluation GROUP BY score")
+    List<Map<String, Object>> countByScore();
 }

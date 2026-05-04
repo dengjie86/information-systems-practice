@@ -4,6 +4,7 @@ import com.dormrepair.common.constant.OrderStatuses;
 import com.dormrepair.stats.mapper.StatsMapper;
 import com.dormrepair.stats.vo.CategoryDistributionVO;
 import com.dormrepair.stats.vo.DailyTrendVO;
+import com.dormrepair.stats.vo.EvaluationStatsVO;
 import com.dormrepair.stats.vo.OverviewVO;
 import com.dormrepair.stats.vo.WorkerLoadVO;
 import java.time.LocalDate;
@@ -70,6 +71,26 @@ public class StatsService {
             list.add(new WorkerLoadVO(wid, wname, total, completed));
         }
         return list;
+    }
+
+    public EvaluationStatsVO getEvaluationStats() {
+        long good = 0;
+        long mid = 0;
+        long bad = 0;
+        for (Map<String, Object> row : statsMapper.countByScore()) {
+            int score = ((Number) row.get("score")).intValue();
+            long cnt = ((Number) row.get("cnt")).longValue();
+            if (score >= 4) {
+                good += cnt;
+            } else if (score == 3) {
+                mid += cnt;
+            } else {
+                bad += cnt;
+            }
+        }
+        long total = good + mid + bad;
+        double rate = total == 0 ? 0.0 : Math.round(good * 10000.0 / total) / 100.0;
+        return new EvaluationStatsVO(total, good, mid, bad, rate);
     }
 
     public List<DailyTrendVO> getRecentTrend() {

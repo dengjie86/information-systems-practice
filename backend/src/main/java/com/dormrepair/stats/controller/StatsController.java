@@ -9,6 +9,7 @@ import com.dormrepair.security.LoginUserContext;
 import com.dormrepair.stats.service.StatsService;
 import com.dormrepair.stats.vo.CategoryDistributionVO;
 import com.dormrepair.stats.vo.DailyTrendVO;
+import com.dormrepair.stats.vo.EvaluationStatsVO;
 import com.dormrepair.stats.vo.OverviewVO;
 import com.dormrepair.stats.vo.WorkerLoadVO;
 import java.util.List;
@@ -47,6 +48,12 @@ public class StatsController {
     public Result<List<DailyTrendVO>> trend() {
         checkAdmin();
         return Result.success(statsService.getRecentTrend());
+    }
+
+    @GetMapping("/evaluation")
+    public Result<EvaluationStatsVO> evaluation() {
+        checkAdmin();
+        return Result.success(statsService.getEvaluationStats());
     }
 
     private void checkAdmin() {
