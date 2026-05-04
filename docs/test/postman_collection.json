@@ -1,0 +1,610 @@
+{
+  "info": {
+    "name": "校园宿舍报修与工单管理系统",
+    "description": "覆盖学生、管理员、维修人员三类角色的核心接口。\n\n使用方法：\n1. 导入 `postman_environment.json` 环境，或自行设置变量 `baseUrl=http://localhost:8080`。\n2. 先跑「登录」目录下的三个登录请求（admin/student1/worker1，密码 123456），登录后会自动把 token 写入环境变量 `tokenAdmin`/`tokenStudent`/`tokenWorker`。\n3. 之后可以按目录顺序依次执行：分类 → 学生提交工单（自动保存 orderId）→ 越权测试 → 管理员审核分派 → 维修人员处理 → 学生确认评价 → 统计接口。\n4. 最末「越权与异常」目录可独立跑，用于课程检查的权限拦截证据。\n\n所有请求遵循《接口规范》：统一前缀 /api、Bearer token 鉴权、统一返回 {code,msg,data}。",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080", "type": "string" },
+    { "key": "tokenAdmin", "value": "", "type": "string" },
+    { "key": "tokenStudent", "value": "", "type": "string" },
+    { "key": "tokenWorker", "value": "", "type": "string" },
+    { "key": "orderId", "value": "", "type": "string" },
+    { "key": "workerId", "value": "5", "type": "string" },
+    { "key": "categoryId", "value": "1", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "0. 健康检查",
+      "item": [
+        {
+          "name": "GET /api/ping",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/ping", "host": ["{{baseUrl}}"], "path": ["api", "ping"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. 登录与用户",
+      "item": [
+        {
+          "name": "POST /api/auth/login - admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('tokenAdmin', r.data.token);",
+                  "  console.log('tokenAdmin 已写入');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "POST /api/auth/login - student1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('tokenStudent', r.data.token);",
+                  "  console.log('tokenStudent 已写入');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "POST /api/auth/login - worker1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
+                  "if (r.data && r.data.token) {",
+                  "  pm.collectionVariables.set('tokenWorker', r.data.token);",
+                  "  console.log('tokenWorker 已写入');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"worker1\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "POST /api/auth/login - 密码错误（期望 400）",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student1\",\n  \"password\": \"wrong\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "GET /api/user/me - 当前用户信息",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user/me", "host": ["{{baseUrl}}"], "path": ["api", "user", "me"] }
+          }
+        },
+        {
+          "name": "PUT /api/user/dorm - 学生修改宿舍",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dormBuilding\": \"1号楼\",\n  \"dormRoom\": \"101\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/user/dorm", "host": ["{{baseUrl}}"], "path": ["api", "user", "dorm"] }
+          }
+        },
+        {
+          "name": "GET /api/user/list - 管理员查看用户",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user/list", "host": ["{{baseUrl}}"], "path": ["api", "user", "list"] }
+          }
+        },
+        {
+          "name": "GET /api/user/workers - 管理员查看维修人员",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/user/workers", "host": ["{{baseUrl}}"], "path": ["api", "user", "workers"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. 故障分类",
+      "item": [
+        {
+          "name": "GET /api/category/list - 学生可见的启用分类",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": { "raw": "{{baseUrl}}/api/category/list", "host": ["{{baseUrl}}"], "path": ["api", "category", "list"] }
+          }
+        },
+        {
+          "name": "GET /api/category/all - 管理员查看全部分类",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/category/all", "host": ["{{baseUrl}}"], "path": ["api", "category", "all"] }
+          }
+        },
+        {
+          "name": "POST /api/category/add - 管理员新增分类",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"categoryName\": \"测试新增分类\",\n  \"description\": \"用于演示新增分类\",\n  \"sortOrder\": 99,\n  \"status\": 1\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/category/add", "host": ["{{baseUrl}}"], "path": ["api", "category", "add"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. 学生 - 报修流程",
+      "item": [
+        {
+          "name": "POST /api/orders - 学生提交报修（保存 orderId）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const r = pm.response.json();",
+                  "pm.test('提交成功', () => pm.expect(r.code).to.eql(200));",
+                  "if (r.data && r.data.id) {",
+                  "  pm.collectionVariables.set('orderId', String(r.data.id));",
+                  "  console.log('orderId =', r.data.id, ' orderNo =', r.data.orderNo);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"宿舍灯不亮\",\n  \"categoryId\": {{categoryId}},\n  \"description\": \"进门处吸顶灯无法开启，已换过灯管仍然不亮\",\n  \"contactPhone\": \"13800000011\",\n  \"priority\": \"NORMAL\",\n  \"imageUrl\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders", "host": ["{{baseUrl}}"], "path": ["api", "orders"] }
+          }
+        },
+        {
+          "name": "GET /api/orders/my - 学生查看自己的工单",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "my"],
+              "query": [
+                { "key": "pageNum", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/orders/{id} - 学生查看工单详情",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "PUT /api/orders/{id} - 学生编辑待审核工单",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"宿舍灯不亮（已补充信息）\",\n  \"categoryId\": {{categoryId}},\n  \"description\": \"进门处吸顶灯无法开启，且偶尔有异响\",\n  \"contactPhone\": \"13800000011\",\n  \"priority\": \"NORMAL\",\n  \"imageUrl\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/cancel - 学生取消报修",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cancelReason\": \"问题已自行解决\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/cancel", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "cancel"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/confirm - 学生确认完成并评价",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"score\": 5,\n  \"content\": \"师傅很快就来修了，效率很高\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/confirm", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "confirm"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. 管理员 - 审核分派",
+      "item": [
+        {
+          "name": "GET /api/orders/admin - 管理员工单列表",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/admin?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "admin"],
+              "query": [
+                { "key": "pageNum", "value": "1" },
+                { "key": "pageSize", "value": "10" },
+                { "key": "status", "value": "PENDING_AUDIT", "disabled": true },
+                { "key": "assignedWorkerId", "value": "5", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/orders/admin/{id} - 管理员工单详情",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/admin/{id}/approve - 审核通过",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminRemark\": \"情况属实，安排维修\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}/approve", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}", "approve"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/admin/{id}/reject - 审核驳回",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectReason\": \"描述不清晰，请补充更多细节\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}/reject", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}", "reject"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/admin/{id}/assign - 分派维修人员",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenAdmin}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workerId\": {{workerId}},\n  \"dispatchRemark\": \"请尽快处理\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}/assign", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}", "assign"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. 维修人员 - 接单处理",
+      "item": [
+        {
+          "name": "GET /api/orders/my - 维修人员的工单",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenWorker}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "my"],
+              "query": [
+                { "key": "pageNum", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/accept - 接单",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenWorker}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/accept", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "accept"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/worker-reject - 拒单",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenWorker}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejectReason\": \"在别处抢修，无法及时处理\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/worker-reject", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "worker-reject"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/record - 添加处理记录",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenWorker}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actionDesc\": \"现场检查发现整流器损坏，已联系备件\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/record", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "record"] }
+          }
+        },
+        {
+          "name": "POST /api/orders/{id}/finish - 完成维修",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenWorker}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"actionDesc\": \"已更换整流器，测试灯具工作正常\",\n  \"resultImage\": \"\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/{{orderId}}/finish", "host": ["{{baseUrl}}"], "path": ["api", "orders", "{{orderId}}", "finish"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. 统计接口（管理员）",
+      "item": [
+        {
+          "name": "GET /api/stats/overview - 工单总览",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/stats/overview", "host": ["{{baseUrl}}"], "path": ["api", "stats", "overview"] }
+          }
+        },
+        {
+          "name": "GET /api/stats/category - 故障分类分布",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/stats/category", "host": ["{{baseUrl}}"], "path": ["api", "stats", "category"] }
+          }
+        },
+        {
+          "name": "GET /api/stats/worker-load - 维修人员处理量",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/stats/worker-load", "host": ["{{baseUrl}}"], "path": ["api", "stats", "worker-load"] }
+          }
+        },
+        {
+          "name": "GET /api/stats/trend - 近 7 天趋势",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenAdmin}}" }],
+            "url": { "raw": "{{baseUrl}}/api/stats/trend", "host": ["{{baseUrl}}"], "path": ["api", "stats", "trend"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. 越权与异常（课程检查证据）",
+      "item": [
+        {
+          "name": "学生 → /api/orders/admin（期望 403）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 403', () => pm.expect(pm.response.code).to.eql(403));",
+                  "const r = pm.response.json();",
+                  "pm.test('业务码 403', () => pm.expect(r.code).to.eql(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/admin?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "admin"],
+              "query": [
+                { "key": "pageNum", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "学生 → /api/stats/overview（期望 403）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 403', () => pm.expect(pm.response.code).to.eql(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tokenStudent}}" }],
+            "url": { "raw": "{{baseUrl}}/api/stats/overview", "host": ["{{baseUrl}}"], "path": ["api", "stats", "overview"] }
+          }
+        },
+        {
+          "name": "维修人员 → 审核接口（期望 403）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenWorker}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminRemark\": \"试一下\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}/approve", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}", "approve"] }
+          }
+        },
+        {
+          "name": "学生 → 分派接口（期望 403）",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{tokenStudent}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"workerId\": {{workerId}},\n  \"dispatchRemark\": \"试一下\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/orders/admin/{{orderId}}/assign", "host": ["{{baseUrl}}"], "path": ["api", "orders", "admin", "{{orderId}}", "assign"] }
+          }
+        },
+        {
+          "name": "未携带 token → /api/user/me（期望 401）",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/user/me", "host": ["{{baseUrl}}"], "path": ["api", "user", "me"] }
+          }
+        },
+        {
+          "name": "无效 token → /api/orders/my（期望 401）",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer invalid.token.here" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders/my?pageNum=1&pageSize=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "orders", "my"],
+              "query": [
+                { "key": "pageNum", "value": "1" },
+                { "key": "pageSize", "value": "10" }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
