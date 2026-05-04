@@ -18,6 +18,7 @@ public class UserEntity {
     private String phone;
     private String dormBuilding;
     private String dormRoom;
+    private String avatar;
     private Integer status;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
