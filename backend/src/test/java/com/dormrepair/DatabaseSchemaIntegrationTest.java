@@ -26,7 +26,7 @@ class DatabaseSchemaIntegrationTest {
             String.class
         );
 
-        assertThat(tables).contains("USER", "REPAIR_CATEGORY", "REPAIR_ORDER", "REPAIR_RECORD", "EVALUATION");
+        assertThat(tables).contains("USER", "REPAIR_CATEGORY", "REPAIR_ORDER", "REPAIR_RECORD", "EVALUATION", "FILE_STORAGE");
 
         List<String> repairOrderColumns = columnsOf("REPAIR_ORDER");
         assertThat(repairOrderColumns).contains("DISPATCH_REMARK");
@@ -36,6 +36,9 @@ class DatabaseSchemaIntegrationTest {
 
         List<String> evaluationColumns = columnsOf("EVALUATION");
         assertThat(evaluationColumns).contains("ORDER_ID", "USER_ID", "SCORE", "CONTENT");
+
+        List<String> fileStorageColumns = columnsOf("FILE_STORAGE");
+        assertThat(fileStorageColumns).contains("FILE_TYPE", "ORIGINAL_NAME", "CONTENT_TYPE", "FILE_SIZE", "FILE_DATA");
     }
 
     private List<String> columnsOf(String tableName) {

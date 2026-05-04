@@ -2,7 +2,8 @@ package com.dormrepair.file.service;
 
 import com.dormrepair.common.exception.BusinessException;
 import com.dormrepair.common.result.ResultCode;
-import org.springframework.beans.factory.annotation.Value;
+import com.dormrepair.file.entity.FileStorageEntity;
+import com.dormrepair.file.mapper.FileStorageMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,13 +11,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
 import java.util.Set;
-import java.util.UUID;
 
 @Service
 public class FileService {
@@ -24,10 +20,12 @@ public class FileService {
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png");
     private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
     private static final Set<String> ALLOWED_TYPES = Set.of("repair", "result");
-    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-    @Value("${file.upload-dir}")
-    private String uploadDir;
+    private final FileStorageMapper fileStorageMapper;
+
+    public FileService(FileStorageMapper fileStorageMapper) {
+        this.fileStorageMapper = fileStorageMapper;
+    }
 
     public String upload(MultipartFile file, String type) {
         if (file == null || file.isEmpty()) {
@@ -46,28 +44,27 @@ public class FileService {
 
         verifyImageContent(file);
 
-        String ext = contentType.equals("image/png") ? ".png" : ".jpg";
-        String fileName = LocalDate.now().format(DATE_FMT) + "_" + UUID.randomUUID().toString().replace("-", "") + ext;
-
-        Path dir = Paths.get(uploadDir, type);
         try {
-            Files.createDirectories(dir);
-            file.transferTo(dir.resolve(fileName).toFile());
+            FileStorageEntity storedFile = new FileStorageEntity();
+            storedFile.setFileType(type);
+            storedFile.setOriginalName(file.getOriginalFilename());
+            storedFile.setContentType(contentType);
+            storedFile.setFileSize(file.getSize());
+            storedFile.setFileData(file.getBytes());
+            storedFile.setCreateTime(LocalDateTime.now());
+            fileStorageMapper.insert(storedFile);
+            return "/api/files/" + storedFile.getId();
         } catch (IOException e) {
             throw new BusinessException(ResultCode.INTERNAL_ERROR, "文件保存失败");
         }
-
-        return "/api/files/" + type + "/" + fileName;
     }
 
-    public Path resolveFilePath(String type, String filename) {
-        if (!ALLOWED_TYPES.contains(type)) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "type 参数仅允许 repair 或 result");
+    public FileStorageEntity getFile(Long id) {
+        FileStorageEntity file = fileStorageMapper.selectById(id);
+        if (file == null || file.getFileData() == null) {
+            throw new BusinessException(ResultCode.NOT_FOUND, "文件不存在");
         }
-        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            throw new BusinessException(ResultCode.BAD_REQUEST, "文件名不合法");
-        }
-        return Paths.get(uploadDir, type, filename);
+        return file;
     }
 
     private void verifyImageContent(MultipartFile file) {

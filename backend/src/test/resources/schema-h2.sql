@@ -1,4 +1,5 @@
 DROP TABLE IF EXISTS evaluation;
+DROP TABLE IF EXISTS file_storage;
 DROP TABLE IF EXISTS repair_record;
 DROP TABLE IF EXISTS repair_order;
 DROP TABLE IF EXISTS repair_category;
@@ -83,4 +84,14 @@ CREATE TABLE evaluation (
     CONSTRAINT uk_eval_order_id UNIQUE (order_id),
     CONSTRAINT fk_eval_order FOREIGN KEY (order_id) REFERENCES repair_order (id),
     CONSTRAINT fk_eval_user FOREIGN KEY (user_id) REFERENCES `user` (id)
+);
+
+CREATE TABLE file_storage (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    file_type VARCHAR(20) NOT NULL,
+    original_name VARCHAR(255),
+    content_type VARCHAR(50) NOT NULL,
+    file_size BIGINT NOT NULL,
+    file_data BLOB NOT NULL,
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
