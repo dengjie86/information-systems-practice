@@ -23,6 +23,11 @@ INSERT INTO repair_order (order_no, user_id, title, category_id, description, do
 INSERT INTO repair_order (order_no, user_id, title, category_id, description, dorm_building, dorm_room, contact_phone, status, priority, reject_reason, submit_time) VALUES
 ('WO202604140001', 4, '想更换窗帘', 8, '窗帘颜色太旧了，想换一个新的。', '2号楼', '305', '13800000013', 'REJECTED', 'LOW', '窗帘更换不属于报修范围，请联系宿管自行购买。', '2026-04-14 10:00:00');
 
+-- 学生自己取消的工单
+INSERT INTO repair_order (order_no, user_id, title, category_id, description, dorm_building, dorm_room, contact_phone, status, priority, submit_time, close_time) VALUES
+('WO202604220001', 3, '水龙头有点松动', 1, '感觉水龙头基座有点松。', '1号楼', '203', '13800000012', 'CANCELLED', 'LOW', '2026-04-22 09:00:00', '2026-04-22 09:30:00'),
+('WO202604230001', 4, '桌子有点晃', 4, '桌子晃动，准备重新填一份描述更清楚的。', '2号楼', '305', '13800000013', 'CANCELLED', 'NORMAL', '2026-04-23 14:00:00', '2026-04-23 14:20:00');
+
 -- 维修记录
 INSERT INTO repair_record (order_id, worker_id, action_desc, action_type, status_before, status_after, action_time) VALUES
 (1, 5, '已接单，预计下午上门维修。', 'ACCEPT', 'PENDING_ACCEPT', 'PROCESSING', '2026-04-15 10:30:00'),
