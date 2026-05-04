@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "校园宿舍报修与工单管理系统",
-    "description": "覆盖学生、管理员、维修人员三类角色的核心接口。\n\n使用方法：\n1. 导入 `postman_environment.json` 环境，或自行设置变量 `baseUrl=http://localhost:8080`。\n2. 先跑「登录」目录下的三个登录请求（admin/student1/worker1，密码 123456），登录后会自动把 token 写入环境变量 `tokenAdmin`/`tokenStudent`/`tokenWorker`。\n3. 之后可以按目录顺序依次执行：分类 → 学生提交工单（自动保存 orderId）→ 越权测试 → 管理员审核分派 → 维修人员处理 → 学生确认评价 → 统计接口。\n4. 最末「越权与异常」目录可独立跑，用于课程检查的权限拦截证据。\n\n所有请求遵循《接口规范》：统一前缀 /api、Bearer token 鉴权、统一返回 {code,msg,data}。",
+    "description": "覆盖学生、管理员、维修人员三类角色的核心接口。\n\n使用方法：\n1. 导入 `postman_environment.json` 环境，或自行设置变量 `baseUrl=http://localhost:8080`。\n2. 先跑「1. 登录与用户」目录下的三个登录请求（admin/student1/worker1，密码 123456），登录后会自动把 token 写入环境变量 `tokenAdmin`/`tokenStudent`/`tokenWorker`。\n3. 之后可以按目录顺序依次执行：分类 → 学生提交工单（自动保存 orderId）→ 越权测试 → 管理员审核分派 → 维修人员处理 → 学生确认评价 → 统计接口。\n4. 最末「7. 越权与异常」目录可独立跑，用于课程检查的权限拦截证据。\n\n所有请求遵循《接口规范》：统一前缀 /api、Bearer token 鉴权、统一返回 {code,msg,data}。",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -41,7 +41,7 @@
                   "const r = pm.response.json();",
                   "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
                   "if (r.data && r.data.token) {",
-                  "  pm.collectionVariables.set('tokenAdmin', r.data.token);",
+                  "  pm.environment.set('tokenAdmin', r.data.token);",
                   "  console.log('tokenAdmin 已写入');",
                   "}"
                 ]
@@ -69,7 +69,7 @@
                   "const r = pm.response.json();",
                   "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
                   "if (r.data && r.data.token) {",
-                  "  pm.collectionVariables.set('tokenStudent', r.data.token);",
+                  "  pm.environment.set('tokenStudent', r.data.token);",
                   "  console.log('tokenStudent 已写入');",
                   "}"
                 ]
@@ -97,7 +97,7 @@
                   "const r = pm.response.json();",
                   "pm.test('登录成功', () => pm.expect(r.code).to.eql(200));",
                   "if (r.data && r.data.token) {",
-                  "  pm.collectionVariables.set('tokenWorker', r.data.token);",
+                  "  pm.environment.set('tokenWorker', r.data.token);",
                   "  console.log('tokenWorker 已写入');",
                   "}"
                 ]
@@ -115,7 +115,7 @@
           }
         },
         {
-          "name": "POST /api/auth/login - 密码错误（期望 400）",
+          "name": "POST /api/auth/login - 密码错误（期望 401）",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -217,7 +217,7 @@
                   "const r = pm.response.json();",
                   "pm.test('提交成功', () => pm.expect(r.code).to.eql(200));",
                   "if (r.data && r.data.id) {",
-                  "  pm.collectionVariables.set('orderId', String(r.data.id));",
+                  "  pm.environment.set('orderId', String(r.data.id));",
                   "  console.log('orderId =', r.data.id, ' orderNo =', r.data.orderNo);",
                   "}"
                 ]
@@ -552,6 +552,17 @@
         },
         {
           "name": "维修人员 → 审核接口（期望 403）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 403', () => pm.expect(pm.response.code).to.eql(403));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -567,6 +578,17 @@
         },
         {
           "name": "学生 → 分派接口（期望 403）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 403', () => pm.expect(pm.response.code).to.eql(403));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -582,6 +604,17 @@
         },
         {
           "name": "未携带 token → /api/user/me（期望 401）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 401', () => pm.expect(pm.response.code).to.eql(401));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -590,6 +623,17 @@
         },
         {
           "name": "无效 token → /api/orders/my（期望 401）",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('返回 401', () => pm.expect(pm.response.code).to.eql(401));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer invalid.token.here" }],
