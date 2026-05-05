@@ -4,6 +4,18 @@
 
 库名：`dorm_repair`，引擎 InnoDB，编码 utf8mb4。
 
+## 正式 ER 图（Chen 记法）
+
+正式版 E-R 图（矩形实体 + 菱形联系 + 主键下划线 + 1/N 基数）放在同目录 `assets/`：
+
+- `assets/er-diagram.pdf` — 课程检查使用，A4 横向
+- `assets/er-diagram.svg` — 矢量源文件，可缩放、可在浏览器/IDE 中预览
+- `assets/er-diagram.html` — 打印壳，浏览器打开 → Ctrl+P 即可重新导出 PDF
+
+![E-R 图](./assets/er-diagram.svg)
+
+下面的 ASCII 版本是供 Markdown 直接阅读的简化形式，内容与上图一致。
+
 ## 一、ER 关系图
 
 ```

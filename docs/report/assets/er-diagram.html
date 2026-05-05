@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>ER 图 · 校园宿舍报修与工单管理系统</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #f4f4f4; font-family: "Microsoft YaHei", sans-serif; }
+  .page {
+    width: 1400px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  }
+  .hint {
+    max-width: 1400px;
+    margin: 20px auto;
+    padding: 12px 16px;
+    background: #fff8dc;
+    border-left: 4px solid #e0a800;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .hint code { background: #eee; padding: 1px 4px; border-radius: 3px; }
+  svg { width: 100%; height: auto; display: block; }
+
+  @page { size: A4 landscape; margin: 8mm; }
+  @media print {
+    body { background: #fff; }
+    .hint { display: none; }
+    .page { width: auto; margin: 0; padding: 0; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="hint">
+  <b>导出 PDF：</b> 按 <code>Ctrl + P</code> → 目标设为"另存为 PDF" → 纸张选 <b>A4 · 横向</b> → 边距"最小" → 保存到本目录，建议命名 <code>er-diagram.pdf</code>。
+</div>
+
+<div class="page">
+  <object type="image/svg+xml" data="er-diagram.svg" style="width:100%;">
+    <!-- 浏览器不支持 object 时回退 -->
+    <img src="er-diagram.svg" alt="ER 图" style="width:100%;">
+  </object>
+</div>
+
+</body>
+</html>
