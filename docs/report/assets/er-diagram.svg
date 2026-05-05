@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 880" font-family="'Microsoft YaHei','SimHei','Segoe UI',sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 920" font-family="'Microsoft YaHei','SimHei','Segoe UI',sans-serif">
   <style>
     .entity-title { font-weight: bold; font-size: 15px; }
     .entity-sub   { font-style: italic; font-size: 11px; fill: #555; }
@@ -11,14 +11,17 @@
     .title-bar    { fill: #dbe4f0; stroke: #333; stroke-width: 1.4; }
     .body         { fill: #ffffff; stroke: #333; stroke-width: 1.4; }
     .diamond      { fill: #fff8dc; stroke: #333; stroke-width: 1.4; }
+    .diamond-weak { fill: #f0f0f0; stroke: #666; stroke-width: 1.2; stroke-dasharray: 4 3; }
     .line         { stroke: #333; stroke-width: 1.4; fill: none; }
+    .line-weak    { stroke: #666; stroke-width: 1.2; stroke-dasharray: 4 3; fill: none; }
     .title        { font-size: 20px; font-weight: bold; }
     .subtitle     { font-size: 12px; fill: #666; }
+    .note         { font-size: 10px; fill: #555; font-style: italic; }
   </style>
 
   <!-- 标题 -->
-  <text x="700" y="32" text-anchor="middle" class="title">校园宿舍报修与工单管理系统 · E-R 图</text>
-  <text x="700" y="52" text-anchor="middle" class="subtitle">库名 dorm_repair    编码 utf8mb4    引擎 InnoDB</text>
+  <text x="740" y="32" text-anchor="middle" class="title">校园宿舍报修与工单管理系统 · E-R 图</text>
+  <text x="740" y="52" text-anchor="middle" class="subtitle">库名 dorm_repair    编码 utf8mb4    引擎 InnoDB    共 6 张表</text>
 
   <!-- ========== 实体：repair_category（上） ========== -->
   <g>
@@ -54,7 +57,7 @@
   <!-- ========== 实体：repair_order（中 · 核心） ========== -->
   <g>
     <rect x="580" y="330" width="240" height="30" class="title-bar"/>
-    <rect x="580" y="360" width="240" height="310" class="body"/>
+    <rect x="580" y="360" width="240" height="346" class="body"/>
     <text x="700" y="350" text-anchor="middle" class="entity-title">repair_order</text>
     <text x="700" y="378" text-anchor="middle" class="entity-sub">报修工单（核心表）</text>
     <text x="595" y="400" class="pk">ID</text>
@@ -69,35 +72,54 @@
     <text x="595" y="562" class="attr">priority</text>
     <text x="595" y="580" class="attr">reject_reason</text>
     <text x="595" y="598" class="attr">admin_remark</text>
-    <text x="595" y="616" class="attr">submit_time</text>
-    <text x="595" y="634" class="attr">assign_time</text>
-    <text x="595" y="652" class="attr">finish_time</text>
+    <text x="595" y="616" class="attr">dispatch_remark</text>
+    <text x="595" y="634" class="attr">submit_time</text>
+    <text x="595" y="652" class="attr">assign_time</text>
+    <text x="595" y="670" class="attr">accept_time</text>
+    <text x="595" y="688" class="attr">finish_time</text>
+    <text x="595" y="704" class="attr" style="font-size:10px">close_time</text>
   </g>
 
-  <!-- ========== 实体：repair_record（右） ========== -->
+  <!-- ========== 实体：repair_record（右上） ========== -->
   <g>
-    <rect x="1140" y="360" width="200" height="30" class="title-bar"/>
-    <rect x="1140" y="390" width="200" height="200" class="body"/>
-    <text x="1240" y="380" text-anchor="middle" class="entity-title">repair_record</text>
-    <text x="1240" y="408" text-anchor="middle" class="entity-sub">维修记录</text>
-    <text x="1155" y="430" class="pk">ID</text>
-    <text x="1155" y="448" class="attr">action_type</text>
-    <text x="1155" y="466" class="attr">action_desc</text>
-    <text x="1155" y="484" class="attr">result_image</text>
-    <text x="1155" y="502" class="attr">status_before</text>
-    <text x="1155" y="520" class="attr">status_after</text>
-    <text x="1155" y="538" class="attr">action_time</text>
+    <rect x="1140" y="320" width="200" height="30" class="title-bar"/>
+    <rect x="1140" y="350" width="200" height="160" class="body"/>
+    <text x="1240" y="340" text-anchor="middle" class="entity-title">repair_record</text>
+    <text x="1240" y="368" text-anchor="middle" class="entity-sub">维修记录</text>
+    <text x="1155" y="390" class="pk">ID</text>
+    <text x="1155" y="408" class="attr">action_type</text>
+    <text x="1155" y="426" class="attr">action_desc</text>
+    <text x="1155" y="444" class="attr">result_image</text>
+    <text x="1155" y="462" class="attr">status_before</text>
+    <text x="1155" y="480" class="attr">status_after</text>
+    <text x="1155" y="498" class="attr">action_time</text>
+  </g>
+
+  <!-- ========== 实体：file_storage（右下，新增） ========== -->
+  <g>
+    <rect x="1140" y="600" width="200" height="30" class="title-bar"/>
+    <rect x="1140" y="630" width="200" height="148" class="body"/>
+    <text x="1240" y="620" text-anchor="middle" class="entity-title">file_storage</text>
+    <text x="1240" y="648" text-anchor="middle" class="entity-sub">图片二进制存储</text>
+    <text x="1155" y="670" class="pk">ID</text>
+    <text x="1155" y="688" class="attr">file_type</text>
+    <text x="1155" y="706" class="attr">original_name</text>
+    <text x="1155" y="724" class="attr">content_type</text>
+    <text x="1155" y="742" class="attr">file_size</text>
+    <text x="1155" y="760" class="attr">file_data (LONGBLOB)</text>
+    <text x="1155" y="775" class="note">create_time</text>
   </g>
 
   <!-- ========== 实体：evaluation（下） ========== -->
   <g>
-    <rect x="590" y="740" width="220" height="30" class="title-bar"/>
-    <rect x="590" y="770" width="220" height="90" class="body"/>
-    <text x="700" y="760" text-anchor="middle" class="entity-title">evaluation</text>
-    <text x="700" y="788" text-anchor="middle" class="entity-sub">学生评价</text>
-    <text x="605" y="810" class="pk">ID</text>
-    <text x="605" y="828" class="attr">score (1-5)</text>
-    <text x="605" y="846" class="attr">content</text>
+    <rect x="590" y="780" width="220" height="30" class="title-bar"/>
+    <rect x="590" y="810" width="220" height="100" class="body"/>
+    <text x="700" y="800" text-anchor="middle" class="entity-title">evaluation</text>
+    <text x="700" y="828" text-anchor="middle" class="entity-sub">学生评价</text>
+    <text x="605" y="850" class="pk">ID</text>
+    <text x="605" y="868" class="attr">score (1-5)</text>
+    <text x="605" y="886" class="attr">content</text>
+    <text x="605" y="904" class="attr">create_time</text>
   </g>
 
   <!-- ========== 联系：belongs_to（category ↔ order） ========== -->
@@ -128,35 +150,59 @@
   <text x="555" y="514" class="card">N</text>
 
   <!-- ========== 联系：has_record（order ↔ record） ========== -->
-  <line x1="820" y1="480" x2="900" y2="480" class="line"/>
-  <polygon points="900,480 980,455 1060,480 980,505" class="diamond"/>
-  <text x="980" y="477" text-anchor="middle" class="rel-label">has</text>
-  <text x="980" y="492" text-anchor="middle" class="rel-sub">处理记录</text>
-  <line x1="1060" y1="480" x2="1140" y2="480" class="line"/>
-  <text x="845" y="474" class="card">1</text>
-  <text x="1105" y="474" class="card">N</text>
+  <line x1="820" y1="430" x2="900" y2="430" class="line"/>
+  <polygon points="900,430 980,405 1060,430 980,455" class="diamond"/>
+  <text x="980" y="427" text-anchor="middle" class="rel-label">has</text>
+  <text x="980" y="442" text-anchor="middle" class="rel-sub">处理记录</text>
+  <line x1="1060" y1="430" x2="1140" y2="430" class="line"/>
+  <text x="845" y="424" class="card">1</text>
+  <text x="1105" y="424" class="card">N</text>
 
   <!-- ========== 联系：has_evaluation（order ↔ evaluation） ========== -->
-  <line x1="700" y1="670" x2="700" y2="685" class="line"/>
-  <polygon points="700,685 770,710 700,735 630,710" class="diamond"/>
-  <text x="700" y="707" text-anchor="middle" class="rel-label">evaluated_by</text>
-  <text x="700" y="722" text-anchor="middle" class="rel-sub">评价</text>
-  <line x1="700" y1="735" x2="700" y2="740" class="line"/>
-  <text x="682" y="680" class="card">1</text>
-  <text x="682" y="744" class="card">0..1</text>
+  <line x1="700" y1="706" x2="700" y2="720" class="line"/>
+  <polygon points="700,720 770,745 700,770 630,745" class="diamond"/>
+  <text x="700" y="742" text-anchor="middle" class="rel-label">evaluated_by</text>
+  <text x="700" y="757" text-anchor="middle" class="rel-sub">评价</text>
+  <line x1="700" y1="770" x2="700" y2="780" class="line"/>
+  <text x="682" y="716" class="card">1</text>
+  <text x="682" y="784" class="card">0..1</text>
+
+  <!-- ========== 弱联系：record.result_image → file_storage ========== -->
+  <line x1="1240" y1="510" x2="1240" y2="540" class="line-weak"/>
+  <polygon points="1240,540 1310,560 1240,580 1170,560" class="diamond-weak"/>
+  <text x="1240" y="558" text-anchor="middle" class="rel-label">stores</text>
+  <text x="1240" y="573" text-anchor="middle" class="rel-sub">result_image (URL 引用)</text>
+  <line x1="1240" y1="580" x2="1240" y2="600" class="line-weak"/>
+  <text x="1222" y="532" class="card">N</text>
+  <text x="1222" y="600" class="card">0..N</text>
+
+  <!-- ========== 弱联系：order.image_url → file_storage ========== -->
+  <path d="M 820 472 Q 1000 472 1080 700" class="line-weak"/>
+  <text x="950" y="468" class="rel-sub">image_url (URL 引用，弱关联)</text>
+  <text x="1075" y="715" class="card">0..N</text>
 
   <!-- ========== 图例 ========== -->
   <g>
-    <rect x="30" y="720" width="280" height="140" fill="#fafafa" stroke="#999" stroke-width="1"/>
-    <text x="40" y="740" font-weight="bold" font-size="12">图例</text>
-    <rect x="40" y="748" width="70" height="18" class="title-bar"/>
-    <rect x="40" y="766" width="70" height="18" class="body"/>
-    <text x="120" y="762" font-size="11">矩形 = 实体</text>
-    <polygon points="40,802 70,790 100,802 70,814" class="diamond"/>
-    <text x="120" y="806" font-size="11">菱形 = 联系</text>
-    <text x="40" y="830" class="pk">ID</text>
-    <text x="120" y="830" font-size="11">下划线 = 主键</text>
-    <text x="40" y="850" class="card">1  N  0..1</text>
-    <text x="120" y="850" font-size="11">基数（联系端点）</text>
+    <rect x="30" y="700" width="290" height="200" fill="#fafafa" stroke="#999" stroke-width="1"/>
+    <text x="40" y="720" font-weight="bold" font-size="13">图例</text>
+
+    <rect x="40" y="730" width="60" height="16" class="title-bar"/>
+    <rect x="40" y="746" width="60" height="16" class="body"/>
+    <text x="115" y="744" font-size="11">矩形 = 实体</text>
+
+    <polygon points="40,775 65,765 90,775 65,785" class="diamond"/>
+    <text x="115" y="780" font-size="11">实线菱形 = 强联系（FK 约束）</text>
+
+    <polygon points="40,805 65,795 90,805 65,815" class="diamond-weak"/>
+    <text x="115" y="810" font-size="11">虚线菱形 = 弱联系（字符串 URL 引用）</text>
+
+    <text x="40" y="838" class="pk">ID</text>
+    <text x="115" y="838" font-size="11">下划线 = 主键（PK）</text>
+
+    <text x="40" y="858" font-size="11">UQ / FK</text>
+    <text x="115" y="858" font-size="11">唯一索引 / 外键</text>
+
+    <text x="40" y="878" class="card">1   N   0..1   0..N</text>
+    <text x="170" y="878" font-size="11">基数</text>
   </g>
 </svg>

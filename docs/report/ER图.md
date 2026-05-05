@@ -95,14 +95,16 @@
 
 ## 二、关系一览
 
-| 关系 | 类型 | 说明 |
-| --- | --- | --- |
-| user → repair_order（报修人） | 1:N | 一个学生能交多个工单 |
-| user → repair_order（维修人员） | 1:N | 一个维修师傅能接多个工单 |
-| repair_category → repair_order | 1:N | 一个分类下有很多工单 |
-| repair_order → repair_record | 1:N | 一个工单可以有多条处理记录 |
-| repair_order → evaluation | 1:0..1 | 一个工单最多一条评价（order_id 加了唯一索引） |
-| user → repair_record（操作人） | 1:N | 维修人员的所有操作记录 |
+| 关系 | 类型 | 约束 | 说明 |
+| --- | --- | --- | --- |
+| user → repair_order（报修人） | 1:N | 强关联（FK） | 一个学生能交多个工单 |
+| user → repair_order（维修人员） | 1:N | 强关联（FK） | 一个维修师傅能接多个工单 |
+| repair_category → repair_order | 1:N | 强关联（FK） | 一个分类下有很多工单 |
+| repair_order → repair_record | 1:N | 强关联（FK） | 一个工单可以有多条处理记录 |
+| repair_order → evaluation | 1:0..1 | 强关联（FK） | 一个工单最多一条评价（order_id 唯一索引） |
+| user → repair_record（操作人） | 1:N | 强关联（FK） | 维修人员的所有操作记录 |
+| repair_order.image_url → file_storage | N:0..N | **弱关联** | image_url 存 `/api/files/{id}` 字符串，多张逗号分隔，无 FK 约束 |
+| repair_record.result_image → file_storage | N:0..N | **弱关联** | 同上，仅 FINISH 记录才有 |
 
 ## 三、各表字段（精简）
 
@@ -182,6 +184,22 @@
 | content | VARCHAR(500) | 评价内容 |
 | create_time | DATETIME | |
 
+### 3.6 file_storage
+
+图片上传后以二进制形式存在本表，业务表（`repair_order.image_url`、`repair_record.result_image`）仅以字符串 URL（`/api/files/{id}`）引用，**不建外键**。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| id | BIGINT PK | 上传接口返回的 ID，拼到 URL 里 |
+| file_type | VARCHAR(20) | 业务类型。如 `order` / `record` / `avatar` |
+| original_name | VARCHAR(255) | 原始文件名 |
+| content_type | VARCHAR(50) | MIME。如 `image/png`、`image/jpeg` |
+| file_size | BIGINT | 字节数 |
+| file_data | LONGBLOB | 二进制内容 |
+| create_time | DATETIME | 上传时间 |
+
+为什么不建 FK：字符串 URL 中的 ID 是作为访问路径使用的，`image_url` 还可以同时存外部路径（早期本地文件路径）。为了向后兼容，没有加 FK。清理孤儿文件靠定期脚本（后期补）。
+
 ## 四、工单状态流转
 
 ```
@@ -229,5 +247,6 @@
 - `repair_order` 上 `user_id` / `category_id` / `assigned_worker_id` / `status` / `submit_time` 都建了索引
 - `repair_record` 上 `order_id` / `worker_id`
 - `evaluation.order_id` 唯一索引（保证一单一评价）
+- `file_storage` 上 `file_type` / `create_time` 加了普通索引，方便按业务类型查询与清理
 
-外键全部设置成 RESTRICT，保证删除时不会孤儿数据。日常开发不会去删 user 或 category，需要禁用就改 status。
+强关联全部设置为 RESTRICT，保证不会产生孤儿数据。日常开发不会去删 user 或 category，需要禁用就改 status。`file_storage` 作为弱关联表不参与 FK 约束，可独立清理。

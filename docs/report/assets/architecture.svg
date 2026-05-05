@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 1400" font-family="'Microsoft YaHei','SimHei','Segoe UI',sans-serif">
+  <style>
+    .title       { font-size: 22px; font-weight: bold; }
+    .subtitle    { font-size: 13px; fill: #666; }
+    .layer-title { font-size: 16px; font-weight: bold; fill: #fff; }
+    .box-title   { font-size: 15px; font-weight: bold; }
+    .box-sub     { font-size: 11px; fill: #555; }
+    .item        { font-size: 12px; }
+    .item-bold   { font-size: 12px; font-weight: bold; }
+    .arrow-label { font-size: 12px; fill: #1a5; font-weight: bold; }
+    .arrow-sub   { font-size: 10px; fill: #666; }
+    .layer-bg-1  { fill: #4a90e2; }
+    .layer-bg-2  { fill: #50b894; }
+    .layer-bg-3  { fill: #e2854a; }
+    .layer-bg-4  { fill: #8a4ae2; }
+    .panel-user  { fill: #eaf3ff; stroke: #4a90e2; stroke-width: 1.5; }
+    .panel-front { fill: #eafaf2; stroke: #50b894; stroke-width: 1.5; }
+    .panel-back  { fill: #fdf2e8; stroke: #e2854a; stroke-width: 1.5; }
+    .panel-db    { fill: #f4eafd; stroke: #8a4ae2; stroke-width: 1.5; }
+    .module      { fill: #ffffff; stroke: #999; stroke-width: 1; }
+    .module-core { fill: #fff8dc; stroke: #b88; stroke-width: 1.5; }
+    .arrow       { stroke: #333; stroke-width: 2; fill: none; marker-end: url(#arrow-end); }
+    .arrow-thin  { stroke: #888; stroke-width: 1; fill: none; stroke-dasharray: 3 2; }
+  </style>
+
+  <defs>
+    <marker id="arrow-end" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- ========== 标题 ========== -->
+  <text x="550" y="36" text-anchor="middle" class="title">校园宿舍报修与工单管理系统 · 系统架构图</text>
+  <text x="550" y="58" text-anchor="middle" class="subtitle">前后端分离 + 关系数据库三层结构 · 单 JAR + 单 MySQL 部署</text>
+
+  <!-- ========== 第 1 层：用户层 ========== -->
+  <rect x="60" y="90" width="980" height="100" class="panel-user" rx="6"/>
+  <rect x="60" y="90" width="180" height="100" class="layer-bg-1" rx="6"/>
+  <text x="150" y="125" text-anchor="middle" class="layer-title">用户层</text>
+  <text x="150" y="148" text-anchor="middle" class="layer-title" style="font-size:13px">User Layer</text>
+  <text x="150" y="172" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">浏览器</text>
+
+  <!-- 三类用户 -->
+  <g>
+    <rect x="280" y="110" width="220" height="60" class="module" rx="4"/>
+    <text x="390" y="135" text-anchor="middle" class="box-title">学生</text>
+    <text x="390" y="155" text-anchor="middle" class="item">提交报修 / 查工单 / 评价</text>
+  </g>
+  <g>
+    <rect x="520" y="110" width="220" height="60" class="module" rx="4"/>
+    <text x="630" y="135" text-anchor="middle" class="box-title">管理员</text>
+    <text x="630" y="155" text-anchor="middle" class="item">审核 / 分派 / 统计 / 用户管理</text>
+  </g>
+  <g>
+    <rect x="760" y="110" width="260" height="60" class="module" rx="4"/>
+    <text x="890" y="135" text-anchor="middle" class="box-title">维修人员</text>
+    <text x="890" y="155" text-anchor="middle" class="item">接单 / 处理 / 上传维修结果</text>
+  </g>
+
+  <!-- 箭头：用户层 → 前端层 -->
+  <line x1="550" y1="190" x2="550" y2="230" class="arrow"/>
+  <text x="565" y="215" class="arrow-label">HTTP / JSON</text>
+
+  <!-- ========== 第 2 层：前端 ========== -->
+  <rect x="60" y="240" width="980" height="220" class="panel-front" rx="6"/>
+  <rect x="60" y="240" width="180" height="220" class="layer-bg-2" rx="6"/>
+  <text x="150" y="280" text-anchor="middle" class="layer-title">展示层</text>
+  <text x="150" y="302" text-anchor="middle" class="layer-title" style="font-size:13px">Vue 3 前端</text>
+  <text x="150" y="324" text-anchor="middle" style="fill:#fff; font-size:11px">端口 3000</text>
+  <text x="150" y="346" text-anchor="middle" style="fill:#fff; font-size:11px">TypeScript</text>
+  <text x="150" y="368" text-anchor="middle" style="fill:#fff; font-size:11px">Vite</text>
+  <text x="150" y="402" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">前端工程</text>
+  <text x="150" y="424" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">frontend/src</text>
+
+  <!-- 前端模块 -->
+  <g>
+    <rect x="280" y="260" width="170" height="80" class="module-core" rx="4"/>
+    <text x="365" y="282" text-anchor="middle" class="box-title">router</text>
+    <text x="365" y="298" text-anchor="middle" class="item">vue-router</text>
+    <text x="365" y="316" text-anchor="middle" class="item">角色守卫</text>
+    <text x="365" y="332" text-anchor="middle" class="item">学生 / 管理员 / 维修员</text>
+  </g>
+  <g>
+    <rect x="465" y="260" width="170" height="80" class="module" rx="4"/>
+    <text x="550" y="282" text-anchor="middle" class="box-title">stores</text>
+    <text x="550" y="298" text-anchor="middle" class="item">Pinia</text>
+    <text x="550" y="316" text-anchor="middle" class="item">user store</text>
+    <text x="550" y="332" text-anchor="middle" class="item">token + 角色</text>
+  </g>
+  <g>
+    <rect x="650" y="260" width="170" height="80" class="module" rx="4"/>
+    <text x="735" y="282" text-anchor="middle" class="box-title">utils/request</text>
+    <text x="735" y="298" text-anchor="middle" class="item">axios + 拦截器</text>
+    <text x="735" y="316" text-anchor="middle" class="item">自动带 Token</text>
+    <text x="735" y="332" text-anchor="middle" class="item">401 自动退登</text>
+  </g>
+  <g>
+    <rect x="835" y="260" width="180" height="80" class="module" rx="4"/>
+    <text x="925" y="282" text-anchor="middle" class="box-title">UI / 图表</text>
+    <text x="925" y="298" text-anchor="middle" class="item">Element Plus</text>
+    <text x="925" y="316" text-anchor="middle" class="item">ECharts 5</text>
+    <text x="925" y="332" text-anchor="middle" class="item">useEChart</text>
+  </g>
+
+  <!-- 视图按角色 -->
+  <g>
+    <rect x="280" y="355" width="240" height="90" class="module" rx="4"/>
+    <text x="400" y="377" text-anchor="middle" class="box-title">views/repair  学生端</text>
+    <text x="400" y="395" text-anchor="middle" class="item">create.vue · list.vue</text>
+    <text x="400" y="413" text-anchor="middle" class="item">detail.vue · dorm.vue</text>
+    <text x="400" y="431" text-anchor="middle" class="box-sub">提交 / 查询 / 评价</text>
+  </g>
+  <g>
+    <rect x="535" y="355" width="240" height="90" class="module" rx="4"/>
+    <text x="655" y="377" text-anchor="middle" class="box-title">views/admin  管理端</text>
+    <text x="655" y="395" text-anchor="middle" class="item">orders / categories</text>
+    <text x="655" y="413" text-anchor="middle" class="item">users / stats</text>
+    <text x="655" y="431" text-anchor="middle" class="box-sub">审核 / 分派 / 数据看板</text>
+  </g>
+  <g>
+    <rect x="790" y="355" width="225" height="90" class="module" rx="4"/>
+    <text x="902" y="377" text-anchor="middle" class="box-title">views/work  维修端</text>
+    <text x="902" y="395" text-anchor="middle" class="item">list.vue</text>
+    <text x="902" y="413" text-anchor="middle" class="item">layout/index.vue</text>
+    <text x="902" y="431" text-anchor="middle" class="box-sub">接单 / 处理 / 完工</text>
+  </g>
+
+  <!-- 箭头：前端 → 后端 -->
+  <line x1="550" y1="460" x2="550" y2="510" class="arrow"/>
+  <text x="565" y="478" class="arrow-label">REST  /api/**</text>
+  <text x="565" y="494" class="arrow-sub">Authorization: Bearer &lt;JWT&gt;</text>
+
+  <!-- ========== 第 3 层：后端 ========== -->
+  <rect x="60" y="520" width="980" height="500" class="panel-back" rx="6"/>
+  <rect x="60" y="520" width="180" height="500" class="layer-bg-3" rx="6"/>
+  <text x="150" y="560" text-anchor="middle" class="layer-title">业务层</text>
+  <text x="150" y="582" text-anchor="middle" class="layer-title" style="font-size:13px">Spring Boot 3.3</text>
+  <text x="150" y="604" text-anchor="middle" style="fill:#fff; font-size:11px">端口 8080</text>
+  <text x="150" y="626" text-anchor="middle" style="fill:#fff; font-size:11px">Java 21</text>
+  <text x="150" y="648" text-anchor="middle" style="fill:#fff; font-size:11px">MyBatis-Plus</text>
+  <text x="150" y="675" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">分层模型</text>
+  <text x="150" y="697" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">Controller</text>
+  <text x="150" y="717" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">↓ Service</text>
+  <text x="150" y="737" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">↓ Mapper</text>
+
+  <!-- 网关层（统一入口） -->
+  <g>
+    <rect x="280" y="540" width="735" height="60" class="module-core" rx="4"/>
+    <text x="647" y="562" text-anchor="middle" class="box-title">公共组件 (security + common + config)</text>
+    <text x="647" y="580" text-anchor="middle" class="item">JWT 拦截器  ·  @RequireRole 角色校验  ·  统一响应 Result&lt;T&gt;  ·  全局异常处理  ·  CORS</text>
+    <text x="647" y="595" text-anchor="middle" class="box-sub">所有 /api/** 请求先经过这一层（白名单除外）</text>
+  </g>
+
+  <!-- 业务模块 -->
+  <g>
+    <rect x="280" y="615" width="180" height="80" class="module" rx="4"/>
+    <text x="370" y="638" text-anchor="middle" class="box-title">auth</text>
+    <text x="370" y="656" text-anchor="middle" class="item">登录 / 修改密码</text>
+    <text x="370" y="674" text-anchor="middle" class="item">JWT 签发</text>
+    <text x="370" y="690" text-anchor="middle" class="box-sub">controller + service + dto</text>
+  </g>
+  <g>
+    <rect x="475" y="615" width="180" height="80" class="module" rx="4"/>
+    <text x="565" y="638" text-anchor="middle" class="box-title">user</text>
+    <text x="565" y="656" text-anchor="middle" class="item">用户 / 角色 / 宿舍</text>
+    <text x="565" y="674" text-anchor="middle" class="item">头像</text>
+  </g>
+  <g>
+    <rect x="670" y="615" width="180" height="80" class="module" rx="4"/>
+    <text x="760" y="638" text-anchor="middle" class="box-title">category</text>
+    <text x="760" y="656" text-anchor="middle" class="item">故障分类</text>
+    <text x="760" y="674" text-anchor="middle" class="item">CRUD + 启停用</text>
+  </g>
+  <g>
+    <rect x="865" y="615" width="150" height="80" class="module" rx="4"/>
+    <text x="940" y="638" text-anchor="middle" class="box-title">file</text>
+    <text x="940" y="656" text-anchor="middle" class="item">上传 / 读取</text>
+    <text x="940" y="674" text-anchor="middle" class="item">/api/files/{id}</text>
+    <text x="940" y="690" text-anchor="middle" class="box-sub">LONGBLOB</text>
+  </g>
+
+  <!-- order 核心模块（突出） -->
+  <g>
+    <rect x="280" y="710" width="380" height="155" class="module-core" rx="4"/>
+    <text x="470" y="734" text-anchor="middle" class="box-title">order  · 工单核心模块（21 个文件）</text>
+    <text x="470" y="752" text-anchor="middle" class="box-sub">学生提交 → 管理员审核 → 分派 → 维修员接单 → 处理 → 完成 → 学生确认评价</text>
+    <line x1="290" y1="762" x2="650" y2="762" stroke="#ccc" stroke-width="1"/>
+    <text x="295" y="780" class="item-bold">Controller</text>
+    <text x="370" y="780" class="item">RepairOrderController · AdminController · WorkerController</text>
+    <text x="295" y="800" class="item-bold">Service</text>
+    <text x="370" y="800" class="item">RepairOrderService · OrderTransitionService（状态机）</text>
+    <text x="295" y="820" class="item-bold">Mapper</text>
+    <text x="370" y="820" class="item">RepairOrderMapper（自定义 SQL：联表 + 分页）</text>
+    <text x="295" y="840" class="item-bold">DTO/VO</text>
+    <text x="370" y="840" class="item">查询入参、列表项、详情、状态扭转返回</text>
+    <text x="295" y="858" class="item-bold">辅助包</text>
+    <text x="370" y="858" class="item">record（维修记录） · evaluation（学生评价）</text>
+  </g>
+
+  <!-- stats 模块 -->
+  <g>
+    <rect x="675" y="710" width="340" height="155" class="module" rx="4"/>
+    <text x="845" y="734" text-anchor="middle" class="box-title">stats  · 数据看板（管理员）</text>
+    <text x="845" y="752" text-anchor="middle" class="box-sub">5 个统计接口 + 5 个 VO</text>
+    <line x1="685" y1="762" x2="1005" y2="762" stroke="#ccc" stroke-width="1"/>
+    <text x="690" y="781" class="item">·  Overview            （工单总量、完成率、近 7 日量）</text>
+    <text x="690" y="800" class="item">·  CategoryDistribution （按分类分布）</text>
+    <text x="690" y="819" class="item">·  WorkerLoad          （各维修人员处理量）</text>
+    <text x="690" y="838" class="item">·  DailyTrend          （近 7 天提交趋势）</text>
+    <text x="690" y="857" class="item">·  EvaluationStats     （评价分布 / 好评率）</text>
+  </g>
+
+  <!-- 数据访问说明 -->
+  <g>
+    <rect x="280" y="880" width="735" height="60" class="module" rx="4"/>
+    <text x="647" y="903" text-anchor="middle" class="box-title">数据访问层 · MyBatis-Plus + 自定义 SQL</text>
+    <text x="647" y="922" text-anchor="middle" class="item">通用 CRUD 走 BaseMapper（IService）；复杂查询（联表、聚合、分页）写到 XML 里手写 SQL</text>
+    <text x="647" y="936" text-anchor="middle" class="box-sub">事务在 Service 层声明（@Transactional），状态扭转保证业务一致性</text>
+  </g>
+
+  <!-- 模块依赖暗示（虚线） -->
+  <line x1="370" y1="695" x2="370" y2="710" class="arrow-thin"/>
+  <line x1="565" y1="695" x2="380" y2="710" class="arrow-thin"/>
+  <line x1="760" y1="695" x2="430" y2="710" class="arrow-thin"/>
+  <line x1="940" y1="695" x2="600" y2="710" class="arrow-thin"/>
+
+  <!-- 箭头：后端 → 数据库 -->
+  <line x1="550" y1="1020" x2="550" y2="1070" class="arrow"/>
+  <text x="565" y="1040" class="arrow-label">JDBC</text>
+  <text x="565" y="1056" class="arrow-sub">含 LONGBLOB 读写</text>
+
+  <!-- ========== 第 4 层：数据 ========== -->
+  <rect x="60" y="1080" width="980" height="280" class="panel-db" rx="6"/>
+  <rect x="60" y="1080" width="180" height="280" class="layer-bg-4" rx="6"/>
+  <text x="150" y="1120" text-anchor="middle" class="layer-title">数据层</text>
+  <text x="150" y="1142" text-anchor="middle" class="layer-title" style="font-size:13px">MySQL 8.0</text>
+  <text x="150" y="1166" text-anchor="middle" style="fill:#fff; font-size:11px">utf8mb4</text>
+  <text x="150" y="1186" text-anchor="middle" style="fill:#fff; font-size:11px">InnoDB</text>
+  <text x="150" y="1206" text-anchor="middle" style="fill:#fff; font-size:11px">单机</text>
+  <text x="150" y="1240" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">库名</text>
+  <text x="150" y="1260" text-anchor="middle" style="fill:#fff; font-size:13px; font-weight:bold">dorm_repair</text>
+  <text x="150" y="1296" text-anchor="middle" style="fill:#fff; font-size:11px; font-style:italic">共 6 张表</text>
+
+  <!-- 5 张业务表 + 1 张文件表 -->
+  <g>
+    <rect x="280" y="1110" width="220" height="60" class="module" rx="4"/>
+    <text x="390" y="1132" text-anchor="middle" class="box-title">user</text>
+    <text x="390" y="1150" text-anchor="middle" class="item">学生 / 管理员 / 维修员</text>
+    <text x="390" y="1164" text-anchor="middle" class="box-sub">三类角色统一存表</text>
+  </g>
+  <g>
+    <rect x="510" y="1110" width="220" height="60" class="module" rx="4"/>
+    <text x="620" y="1132" text-anchor="middle" class="box-title">repair_category</text>
+    <text x="620" y="1150" text-anchor="middle" class="item">故障分类</text>
+  </g>
+  <g>
+    <rect x="740" y="1110" width="280" height="60" class="module-core" rx="4"/>
+    <text x="880" y="1132" text-anchor="middle" class="box-title">repair_order  ★ 核心表</text>
+    <text x="880" y="1150" text-anchor="middle" class="item">8 种状态、order_no 唯一</text>
+    <text x="880" y="1164" text-anchor="middle" class="box-sub">user_id / category_id / assigned_worker_id</text>
+  </g>
+
+  <g>
+    <rect x="280" y="1180" width="220" height="60" class="module" rx="4"/>
+    <text x="390" y="1202" text-anchor="middle" class="box-title">repair_record</text>
+    <text x="390" y="1220" text-anchor="middle" class="item">维修记录（接单/完成）</text>
+    <text x="390" y="1234" text-anchor="middle" class="box-sub">FK → order, worker</text>
+  </g>
+  <g>
+    <rect x="510" y="1180" width="220" height="60" class="module" rx="4"/>
+    <text x="620" y="1202" text-anchor="middle" class="box-title">evaluation</text>
+    <text x="620" y="1220" text-anchor="middle" class="item">学生评价 1~5 分</text>
+    <text x="620" y="1234" text-anchor="middle" class="box-sub">order_id 唯一索引</text>
+  </g>
+  <g>
+    <rect x="740" y="1180" width="280" height="60" class="module" rx="4"/>
+    <text x="880" y="1202" text-anchor="middle" class="box-title">file_storage</text>
+    <text x="880" y="1220" text-anchor="middle" class="item">图片二进制（LONGBLOB）</text>
+    <text x="880" y="1234" text-anchor="middle" class="box-sub">弱关联：image_url 字符串引用</text>
+  </g>
+
+  <!-- 数据层说明 -->
+  <g>
+    <rect x="280" y="1260" width="735" height="80" class="module" rx="4"/>
+    <text x="647" y="1283" text-anchor="middle" class="box-title">索引与约束</text>
+    <text x="647" y="1303" text-anchor="middle" class="item">user.username · repair_order.order_no · evaluation.order_id 加唯一索引</text>
+    <text x="647" y="1320" text-anchor="middle" class="item">repair_order 在 user_id / category_id / assigned_worker_id / status / submit_time 上建普通索引</text>
+    <text x="647" y="1336" text-anchor="middle" class="box-sub">业务表外键 RESTRICT；file_storage 不参与 FK，可独立清理</text>
+  </g>
+
+  <!-- ========== 底部图例 ========== -->
+  <g>
+    <text x="60" y="1390" font-size="11" fill="#666">说明：</text>
+    <rect x="120" y="1380" width="20" height="14" class="module-core"/>
+    <text x="148" y="1391" font-size="11" fill="#444">核心模块 / 核心表</text>
+    <rect x="290" y="1380" width="20" height="14" class="module"/>
+    <text x="318" y="1391" font-size="11" fill="#444">普通模块</text>
+    <line x1="400" y1="1387" x2="430" y2="1387" stroke="#333" stroke-width="2"/>
+    <polygon points="430,1383 437,1387 430,1391" fill="#333"/>
+    <text x="445" y="1391" font-size="11" fill="#444">数据流向</text>
+    <line x1="540" y1="1387" x2="570" y2="1387" stroke="#888" stroke-width="1" stroke-dasharray="3 2"/>
+    <text x="580" y="1391" font-size="11" fill="#444">模块依赖</text>
+  </g>
+</svg>
