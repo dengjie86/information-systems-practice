@@ -6,6 +6,7 @@ USE dorm_repair;
 
 -- 先删旧表，注意外键顺序
 DROP TABLE IF EXISTS evaluation;
+DROP TABLE IF EXISTS file_storage;
 DROP TABLE IF EXISTS repair_record;
 DROP TABLE IF EXISTS repair_order;
 DROP TABLE IF EXISTS repair_category;
@@ -111,4 +112,17 @@ CREATE TABLE evaluation (
     KEY idx_user_id (user_id),
     CONSTRAINT fk_eval_order FOREIGN KEY (order_id) REFERENCES repair_order (id),
     CONSTRAINT fk_eval_user FOREIGN KEY (user_id) REFERENCES `user` (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE file_storage (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    file_type VARCHAR(20) NOT NULL,
+    original_name VARCHAR(255) DEFAULT NULL,
+    content_type VARCHAR(50) NOT NULL,
+    file_size BIGINT NOT NULL,
+    file_data LONGBLOB NOT NULL,
+    create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_file_type (file_type),
+    KEY idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
