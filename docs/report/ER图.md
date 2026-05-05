@@ -48,7 +48,7 @@
                  │  image_url               │
                  │  dorm_building/room      │
                  │  contact_phone           │
-                 │  status   8 种状态         │
+                 │  status   9 种状态         │
                  │  priority LOW/NORMAL/    │
                  │           HIGH/URGENT    │
                  │  assigned_worker_id (FK) │
@@ -147,7 +147,7 @@
 | image_url | VARCHAR(500) | 图片，多张逗号分隔 |
 | dorm_building / dorm_room | VARCHAR | 报修地点 |
 | contact_phone | VARCHAR(20) | 联系电话 |
-| status | VARCHAR(20) | 8 种状态见下 |
+| status | VARCHAR(20) | 9 种状态见下 |
 | priority | VARCHAR(10) | LOW / NORMAL / HIGH / URGENT |
 | assigned_worker_id | BIGINT FK | 分派给谁 |
 | reject_reason | VARCHAR(255) | 驳回原因 |

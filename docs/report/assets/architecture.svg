@@ -257,7 +257,7 @@
   <g>
     <rect x="740" y="1110" width="280" height="60" class="module-core" rx="4"/>
     <text x="880" y="1132" text-anchor="middle" class="box-title">repair_order  ★ 核心表</text>
-    <text x="880" y="1150" text-anchor="middle" class="item">8 种状态、order_no 唯一</text>
+    <text x="880" y="1150" text-anchor="middle" class="item">9 种状态、order_no 唯一</text>
     <text x="880" y="1164" text-anchor="middle" class="box-sub">user_id / category_id / assigned_worker_id</text>
   </g>
 
