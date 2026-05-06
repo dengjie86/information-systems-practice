@@ -129,7 +129,7 @@
   <text x="700" y="308" text-anchor="middle" class="rel-sub">属于</text>
   <line x1="700" y1="320" x2="700" y2="330" class="line"/>
   <text x="682" y="262" class="card">1</text>
-  <text x="682" y="326" class="card">N</text>
+  <text x="682" y="326" class="card">0..*</text>
 
   <!-- ========== 联系：submits（user ↔ order，学生角色） ========== -->
   <line x1="260" y1="420" x2="320" y2="420" class="line"/>
@@ -138,7 +138,7 @@
   <text x="400" y="432" text-anchor="middle" class="rel-sub">提交 · 学生</text>
   <line x1="480" y1="420" x2="580" y2="420" class="line"/>
   <text x="290" y="414" class="card">1</text>
-  <text x="555" y="414" class="card">N</text>
+  <text x="555" y="414" class="card">0..*</text>
 
   <!-- ========== 联系：assigned_to（user ↔ order，维修员角色） ========== -->
   <line x1="260" y1="520" x2="320" y2="520" class="line"/>
@@ -147,7 +147,7 @@
   <text x="400" y="532" text-anchor="middle" class="rel-sub">派单 · 维修员</text>
   <line x1="480" y1="520" x2="580" y2="520" class="line"/>
   <text x="290" y="514" class="card">1</text>
-  <text x="555" y="514" class="card">N</text>
+  <text x="555" y="514" class="card">0..*</text>
 
   <!-- ========== 联系：has_record（order ↔ record） ========== -->
   <line x1="820" y1="430" x2="900" y2="430" class="line"/>
@@ -156,7 +156,7 @@
   <text x="980" y="442" text-anchor="middle" class="rel-sub">处理记录</text>
   <line x1="1060" y1="430" x2="1140" y2="430" class="line"/>
   <text x="845" y="424" class="card">1</text>
-  <text x="1105" y="424" class="card">N</text>
+  <text x="1105" y="424" class="card">0..*</text>
 
   <!-- ========== 联系：has_evaluation（order ↔ evaluation） ========== -->
   <line x1="700" y1="706" x2="700" y2="720" class="line"/>
@@ -173,13 +173,13 @@
   <text x="1240" y="558" text-anchor="middle" class="rel-label">stores</text>
   <text x="1240" y="573" text-anchor="middle" class="rel-sub">result_image (URL 引用)</text>
   <line x1="1240" y1="580" x2="1240" y2="600" class="line-weak"/>
-  <text x="1222" y="532" class="card">N</text>
-  <text x="1222" y="600" class="card">0..N</text>
+  <text x="1222" y="532" class="card">0..*</text>
+  <text x="1222" y="600" class="card">0..*</text>
 
   <!-- ========== 弱联系：order.image_url → file_storage ========== -->
   <path d="M 820 472 Q 1000 472 1080 700" class="line-weak"/>
   <text x="950" y="468" class="rel-sub">image_url (URL 引用，弱关联)</text>
-  <text x="1075" y="715" class="card">0..N</text>
+  <text x="1075" y="715" class="card">0..*</text>
 
   <!-- ========== 图例 ========== -->
   <g>
@@ -202,7 +202,7 @@
     <text x="40" y="858" font-size="11">UQ / FK</text>
     <text x="115" y="858" font-size="11">唯一索引 / 外键</text>
 
-    <text x="40" y="878" class="card">1   N   0..1   0..N</text>
+    <text x="40" y="878" class="card">1   0..*   0..1</text>
     <text x="170" y="878" font-size="11">基数</text>
   </g>
 </svg>

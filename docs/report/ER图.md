@@ -6,7 +6,7 @@
 
 ## 正式 ER 图（Chen 记法）
 
-正式版 E-R 图（矩形实体 + 菱形联系 + 主键下划线 + 1/N 基数）放在同目录 `assets/`：
+正式版 E-R 图（矩形实体 + 菱形联系 + 主键下划线 + 1 / 0..* 基数）放在同目录 `assets/`：
 
 - `assets/er-diagram.pdf` — 课程检查使用，A4 横向
 - `assets/er-diagram.svg` — 矢量源文件，可缩放、可在浏览器/IDE 中预览
@@ -61,7 +61,7 @@
                       │           │
                       │ 1         │ 1
                       │           │
-                      ▼ N         ▼ 0..1
+                      ▼ 0..*       ▼ 0..1
             ┌──────────────────┐  ┌────────────────────┐
             │  repair_record   │  │     evaluation     │
             │  id (PK)         │  │  id (PK)           │
@@ -88,7 +88,7 @@
                        ▲
                        │ 1
                        │
-                       │ N
+                       │ 0..*
                        │
                   repair_order.category_id
 ```
@@ -97,14 +97,14 @@
 
 | 关系 | 类型 | 约束 | 说明 |
 | --- | --- | --- | --- |
-| user → repair_order（报修人） | 1:N | 强关联（FK） | 一个学生能交多个工单 |
-| user → repair_order（维修人员） | 1:N | 强关联（FK） | 一个维修师傅能接多个工单 |
-| repair_category → repair_order | 1:N | 强关联（FK） | 一个分类下有很多工单 |
-| repair_order → repair_record | 1:N | 强关联（FK） | 一个工单可以有多条处理记录 |
-| repair_order → evaluation | 1:0..1 | 强关联（FK） | 一个工单最多一条评价（order_id 唯一索引） |
-| user → repair_record（操作人） | 1:N | 强关联（FK） | 维修人员的所有操作记录 |
-| repair_order.image_url → file_storage | N:0..N | **弱关联** | image_url 存 `/api/files/{id}` 字符串，多张逗号分隔，无 FK 约束 |
-| repair_record.result_image → file_storage | N:0..N | **弱关联** | 同上，仅 FINISH 记录才有 |
+| user → repair_order（报修人） | 1 : 0..* | 强关联（FK） | 一个学生能交多个工单 |
+| user → repair_order（维修人员） | 1 : 0..* | 强关联（FK） | 一个维修师傅能接多个工单 |
+| repair_category → repair_order | 1 : 0..* | 强关联（FK） | 一个分类下有很多工单 |
+| repair_order → repair_record | 1 : 0..* | 强关联（FK） | 一个工单可以有多条处理记录 |
+| repair_order → evaluation | 1 : 0..1 | 强关联（FK） | 一个工单最多一条评价（order_id 唯一索引） |
+| user → repair_record（操作人） | 1 : 0..* | 强关联（FK） | 维修人员的所有操作记录 |
+| repair_order.image_url → file_storage | 0..* : 0..* | **弱关联** | image_url 存 `/api/files/{id}` 字符串，多张逗号分隔，无 FK 约束 |
+| repair_record.result_image → file_storage | 0..* : 0..* | **弱关联** | 同上，仅 FINISH 记录才有 |
 
 ## 三、各表字段（精简）
 
